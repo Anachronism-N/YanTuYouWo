@@ -78,6 +78,17 @@ function FilterSelect({
   // 当 value 有值时，传入 value 使其成为 controlled 状态
   const hasValue = value !== "";
 
+  // 获取当前选中值对应的中文标签
+  const getDisplayLabel = (val: string): string | undefined => {
+    if (!val) return undefined;
+    for (const opt of options) {
+      const optVal = typeof opt === "string" ? opt : opt.value;
+      const optLabel = typeof opt === "string" ? opt : opt.label;
+      if (optVal === val) return optLabel;
+    }
+    return val;
+  };
+
   return (
     <Select
       key={hasValue ? "controlled" : `uncontrolled-${placeholder}`}
@@ -86,7 +97,11 @@ function FilterSelect({
       onValueChange={(v) => onValueChange(v ?? "")}
     >
       <SelectTrigger className="h-9 text-sm w-full">
-        <SelectValue placeholder={placeholder} />
+        {hasValue ? (
+          <span>{getDisplayLabel(value)}</span>
+        ) : (
+          <SelectValue placeholder={placeholder} />
+        )}
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="__all__">{allLabel}</SelectItem>
@@ -280,7 +295,7 @@ export default function FilterPanel({
             onValueChange={(v) => updateFilter("sort", v ?? "latest")}
           >
             <SelectTrigger className="h-8 w-[120px] text-xs">
-              <SelectValue />
+              <span>{NOTICE_SORT_OPTIONS.find(o => o.value === (values.sort || "latest"))?.label || "最新发布"}</span>
             </SelectTrigger>
             <SelectContent>
               {NOTICE_SORT_OPTIONS.map((opt) => (
