@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Breadcrumb,
@@ -13,9 +13,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Building2, X, Filter, GraduationCap } from "lucide-react";
+import { Search, Building2, X, Filter, GraduationCap, Loader2 } from "lucide-react";
 import SchoolCard from "@/components/common/SchoolCard";
-import { mockSchools } from "@/lib/mock-data";
+import { getSchools } from "@/lib/api";
+import type { SchoolItem } from "@/types/school";
 import { SCHOOL_LEVEL_OPTIONS, PROVINCE_OPTIONS } from "@/lib/constants";
 
 const fadeInUp = {
@@ -29,36 +30,44 @@ export default function SchoolsPage() {
   const [province, setProvince] = useState("");
   const [sort, setSort] = useState<"name" | "notice_count">("notice_count");
 
-  const filteredSchools = useMemo(() => {
-    let result = [...mockSchools];
+  const [schools, setSchools] = useState<SchoolItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-    if (keyword) {
-      const kw = keyword.toLowerCase();
-      result = result.filter(
-        (s) =>
-          s.name.toLowerCase().includes(kw) ||
-          s.short_name.toLowerCase().includes(kw) ||
-          s.province.includes(kw) ||
-          s.city.includes(kw)
-      );
+  // 从后端 API 获取院校数据
+  useEffect(() => {
+    async function fetchSchools() {
+      setLoading(true);
+      try {
+        const params: Record<string, string | number> = {
+          sort,
+          size: 100, // 院校数量不多，一次性加载
+        };
+        if (keyword) params.keyword = keyword;
+        if (level) params.level = level;
+        if (province) params.province = province;
+
+        const res = await getSchools(params as any);
+        setSchools(res.items);
+        setTotal(res.total);
+      } catch {
+        setSchools([]);
+        setTotal(0);
+      } finally {
+        setLoading(false);
+      }
     }
-
-    if (level) {
-      result = result.filter((s) => s.level === level);
-    }
-
-    if (province) {
-      result = result.filter((s) => s.province === province);
-    }
-
-    if (sort === "notice_count") {
-      result.sort((a, b) => b.notice_count - a.notice_count);
-    } else {
-      result.sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
-    }
-
-    return result;
+    fetchSchools();
   }, [keyword, level, province, sort]);
+
+  // 防抖搜索
+  const [searchInput, setSearchInput] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setKeyword(searchInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const activeFilterCount = [level, province].filter(Boolean).length;
 
@@ -96,12 +105,12 @@ export default function SchoolsPage() {
           <Input
             placeholder="搜索学校名称、城市..."
             className="h-11 pl-10 pr-10 rounded-xl"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
-          {keyword && (
+          {searchInput && (
             <button
-              onClick={() => setKeyword("")}
+              onClick={() => setSearchInput("")}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
@@ -200,24 +209,31 @@ export default function SchoolsPage() {
 
       {/* 结果统计 */}
       <div className="mb-4 text-sm text-muted-foreground">
-        共 <span className="font-medium text-foreground">{filteredSchools.length}</span> 所院校
+        共 <span className="font-medium text-foreground">{total}</span> 所院校
       </div>
 
       {/* 院校网格 */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      >
-        {filteredSchools.map((school) => (
-          <motion.div key={school.id} variants={fadeInUp}>
-            <SchoolCard school={school} />
-          </motion.div>
-        ))}
-      </motion.div>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-3 text-muted-foreground">加载中...</span>
+        </div>
+      ) : (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
+          {schools.map((school) => (
+            <motion.div key={school.id} variants={fadeInUp}>
+              <SchoolCard school={school} />
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
 
-      {filteredSchools.length === 0 && (
+      {!loading && schools.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <Building2 className="h-12 w-12 mb-4 opacity-30" />
           <p className="text-lg font-medium">暂无符合条件的院校</p>
@@ -226,7 +242,7 @@ export default function SchoolsPage() {
             <Button
               variant="outline"
               className="mt-4"
-              onClick={() => { setKeyword(""); setLevel(""); setProvince(""); }}
+              onClick={() => { setSearchInput(""); setKeyword(""); setLevel(""); setProvince(""); }}
             >
               清除筛选条件
             </Button>

@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,9 +30,10 @@ import {
   AlertCircle,
   ChevronRight,
   BookmarkPlus,
+  Loader2,
 } from "lucide-react";
-import { mockNoticeDetail } from "@/lib/mock-data";
-import type { NoticeStatus } from "@/types/notice";
+import { getNoticeDetail } from "@/lib/api";
+import type { NoticeDetail, NoticeStatus } from "@/types/notice";
 
 /** 状态配色 */
 const statusConfig: Record<NoticeStatus, { bg: string; text: string; label: string; dot: string }> = {
@@ -38,13 +43,47 @@ const statusConfig: Record<NoticeStatus, { bg: string; text: string; label: stri
   ended: { bg: "bg-gray-50", text: "text-gray-500", label: "已结束", dot: "bg-gray-400" },
 };
 
-export default async function NoticeDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const notice = { ...mockNoticeDetail, id: Number(id) };
+export default function NoticeDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const [notice, setNotice] = useState<NoticeDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchNotice() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getNoticeDetail(Number(id));
+        setNotice(data);
+      } catch {
+        setError("通知不存在或加载失败");
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (id) fetchNotice();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">加载中...</p>
+      </div>
+    );
+  }
+
+  if (error || !notice) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
+        <AlertCircle className="h-12 w-12 text-muted-foreground/50" />
+        <p className="mt-4 text-lg font-medium text-muted-foreground">{error || "通知不存在"}</p>
+      </div>
+    );
+  }
+
   const statusInfo = statusConfig[notice.status] || statusConfig.registering;
 
   const daysLeft = notice.registration_end
@@ -248,11 +287,15 @@ export default async function NoticeDetailPage({
                     <div>
                       <div className="font-medium">学科方向</div>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {notice.disciplines.map((d) => (
-                          <Badge key={d} variant="secondary" className="text-xs font-normal">
-                            {d}
-                          </Badge>
-                        ))}
+                        {notice.disciplines.length > 0 ? (
+                          notice.disciplines.map((d) => (
+                            <Badge key={d} variant="secondary" className="text-xs font-normal">
+                              {d}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground text-xs">暂无</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -346,43 +389,49 @@ export default async function NoticeDetailPage({
           )}
 
           {/* 原文内容 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <FileText className="h-4 w-4" />
-                </div>
-                通知原文
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="whitespace-pre-line text-sm leading-7">
-                  {notice.raw_content}
-                </div>
-            </CardContent>
-          </Card>
+          {notice.raw_content && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  通知原文
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <div className="whitespace-pre-line text-sm leading-7">
+                    {notice.raw_content}
+                  </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* 来源信息 */}
-          <Card className="bg-muted/20 border-dashed">
-            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <ExternalLink className="h-4 w-4 shrink-0" />
-                <span>原文链接：</span>
-                <a
-                  href={notice.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline truncate max-w-xs"
-                >
-                  {notice.source_url}
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 shrink-0" />
-                <span>收录时间：{new Date(notice.created_at).toLocaleString("zh-CN")}</span>
-              </div>
-            </CardContent>
-          </Card>
+          {notice.source_url && (
+            <Card className="bg-muted/20 border-dashed">
+              <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4 shrink-0" />
+                  <span>原文链接：</span>
+                  <a
+                    href={notice.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline truncate max-w-xs"
+                  >
+                    {notice.source_url}
+                  </a>
+                </div>
+                {notice.created_at && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 shrink-0" />
+                    <span>收录时间：{new Date(notice.created_at).toLocaleString("zh-CN")}</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

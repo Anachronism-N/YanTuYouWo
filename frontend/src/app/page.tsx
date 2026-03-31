@@ -29,8 +29,12 @@ import { Input } from "@/components/ui/input";
 import InfoCard from "@/components/common/InfoCard";
 import SchoolCard from "@/components/common/SchoolCard";
 import { mockNotices, mockSchools, mockStats } from "@/lib/mock-data";
+import { getStatsOverview, getLatestNotices, getSchools } from "@/lib/api";
+import type { StatsOverview } from "@/types/api";
+import type { NoticeItem } from "@/types/notice";
+import type { SchoolItem } from "@/types/school";
 import { SITE_NAME } from "@/lib/constants";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 /** 动画变体 */
@@ -50,6 +54,34 @@ const staggerContainer = {
 export default function HomePage() {
   const [searchKeyword, setSearchKeyword] = useState("");
   const router = useRouter();
+
+  // 真实数据状态
+  const [stats, setStats] = useState<StatsOverview>(mockStats);
+  const [latestNotices, setLatestNotices] = useState<NoticeItem[]>(mockNotices.slice(0, 4));
+  const [hotSchools, setHotSchools] = useState<SchoolItem[]>(mockSchools.slice(0, 8));
+  const [loading, setLoading] = useState(true);
+
+  // 从后端 API 获取真实数据
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [statsRes, noticesRes, schoolsRes] = await Promise.allSettled([
+          getStatsOverview(),
+          getLatestNotices(4),
+          getSchools({ sort: "notice_count", size: 8 }),
+        ]);
+
+        if (statsRes.status === "fulfilled") setStats(statsRes.value);
+        if (noticesRes.status === "fulfilled") setLatestNotices(noticesRes.value.items);
+        if (schoolsRes.status === "fulfilled") setHotSchools(schoolsRes.value.items);
+      } catch {
+        // API 不可用时保持 mock 数据
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +111,7 @@ export default function HomePage() {
             <motion.div variants={fadeInUp}>
               <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm backdrop-blur-sm">
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                全国 {mockStats.school_count} 所高校信息已收录
+                全国 {stats.school_count} 所高校信息已收录
               </Badge>
             </motion.div>
 
@@ -155,10 +187,10 @@ export default function HomePage() {
             className="grid grid-cols-2 gap-4 sm:grid-cols-4"
           >
             {[
-              { label: "收录院校", value: mockStats.school_count, suffix: "所", icon: Building2 },
-              { label: "招生通知", value: mockStats.notice_count, suffix: "条", icon: BookOpen },
-              { label: "覆盖学院", value: mockStats.department_count, suffix: "个", icon: GraduationCap },
-              { label: "收录导师", value: mockStats.tutor_count, suffix: "位", icon: Users },
+              { label: "收录院校", value: stats.school_count, suffix: "所", icon: Building2 },
+              { label: "招生通知", value: stats.notice_count, suffix: "条", icon: BookOpen },
+              { label: "覆盖学院", value: stats.department_count, suffix: "个", icon: GraduationCap },
+              { label: "收录导师", value: stats.tutor_count, suffix: "位", icon: Users },
             ].map((stat) => (
               <motion.div key={stat.label} variants={fadeInUp}>
                 <Card className="border-none bg-transparent shadow-none">
@@ -376,7 +408,7 @@ export default function HomePage() {
             </motion.div>
 
             <div className="mt-8 space-y-4">
-              {mockNotices.slice(0, 4).map((notice, i) => (
+              {latestNotices.map((notice, i) => (
                 <motion.div key={notice.id} variants={fadeInUp} custom={i}>
                   <InfoCard notice={notice} />
                 </motion.div>
@@ -417,7 +449,7 @@ export default function HomePage() {
           </motion.div>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {mockSchools.slice(0, 8).map((school, i) => (
+            {hotSchools.map((school, i) => (
               <motion.div key={school.id} variants={fadeInUp} custom={i}>
                 <SchoolCard school={school} />
               </motion.div>

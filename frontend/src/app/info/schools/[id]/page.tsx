@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   Breadcrumb,
@@ -17,22 +21,69 @@ import {
   ExternalLink,
   FileText,
   GraduationCap,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import InfoCard from "@/components/common/InfoCard";
-import { mockSchoolDetail, mockNotices } from "@/lib/mock-data";
+import { getSchoolDetail, getSchoolNotices } from "@/lib/api";
+import type { SchoolDetail } from "@/types/school";
+import type { NoticeItem } from "@/types/notice";
 
-export default async function SchoolDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const school = { ...mockSchoolDetail, id: Number(id) };
+export default function SchoolDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
 
-  // 该院校下的通知（Mock）
-  const schoolNotices = mockNotices.filter(
-    (n) => n.university_name === school.name
-  );
+  const [school, setSchool] = useState<SchoolDetail | null>(null);
+  const [schoolNotices, setSchoolNotices] = useState<NoticeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [schoolRes, noticesRes] = await Promise.allSettled([
+          getSchoolDetail(Number(id)),
+          getSchoolNotices(Number(id), { size: 50 }),
+        ]);
+
+        if (schoolRes.status === "fulfilled") {
+          setSchool(schoolRes.value);
+        } else {
+          setError("院校不存在或加载失败");
+          return;
+        }
+
+        if (noticesRes.status === "fulfilled") {
+          setSchoolNotices(noticesRes.value.items);
+        }
+      } catch {
+        setError("加载失败");
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (id) fetchData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">加载中...</p>
+      </div>
+    );
+  }
+
+  if (error || !school) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
+        <AlertCircle className="h-12 w-12 text-muted-foreground/50" />
+        <p className="mt-4 text-lg font-medium text-muted-foreground">{error || "院校不存在"}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -65,7 +116,7 @@ export default async function SchoolDetailPage({
           <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <MapPin className="h-4 w-4" />
-              {school.province} · {school.city}
+              {school.province}{school.city ? ` · ${school.city}` : ""}
             </div>
             <div className="flex items-center gap-1">
               <Building2 className="h-4 w-4" />
@@ -77,24 +128,28 @@ export default async function SchoolDetailPage({
             </div>
           </div>
           <div className="mt-2 flex flex-wrap gap-3 text-sm">
-            <a
-              href={school.homepage_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-primary hover:underline"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              官网
-            </a>
-            <a
-              href={school.graduate_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-primary hover:underline"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              研究生院
-            </a>
+            {school.homepage_url && (
+              <a
+                href={school.homepage_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-primary hover:underline"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                官网
+              </a>
+            )}
+            {school.graduate_url && (
+              <a
+                href={school.graduate_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-primary hover:underline"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                研究生院
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -105,7 +160,7 @@ export default async function SchoolDetailPage({
       <Tabs defaultValue="departments" className="w-full">
         <TabsList>
           <TabsTrigger value="departments">学院列表</TabsTrigger>
-          <TabsTrigger value="notices">最新通知</TabsTrigger>
+          <TabsTrigger value="notices">最新通知 ({schoolNotices.length})</TabsTrigger>
           <TabsTrigger value="about">院校简介</TabsTrigger>
         </TabsList>
 
@@ -132,18 +187,25 @@ export default async function SchoolDetailPage({
                         {dept.notice_count} 条通知
                       </Badge>
                     )}
-                    <a
-                      href={dept.homepage_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
+                    {dept.homepage_url && (
+                      <a
+                        href={dept.homepage_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-primary"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             ))}
+            {school.departments.length === 0 && (
+              <div className="py-16 text-center text-muted-foreground">
+                暂无学院信息
+              </div>
+            )}
           </div>
         </TabsContent>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useCallback } from "react";
+import { Suspense, useEffect, useMemo, useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutGrid, List } from "lucide-react";
@@ -18,7 +18,8 @@ import InfoCard from "@/components/common/InfoCard";
 import CompactInfoCard from "@/components/common/CompactInfoCard";
 import Pagination from "@/components/common/Pagination";
 import { NoticeListSkeleton } from "@/components/common/LoadingSkeleton";
-import { mockNotices } from "@/lib/mock-data";
+import { getNotices } from "@/lib/api";
+import type { NoticeItem } from "@/types/notice";
 import { useFilterStore, type FilterValues } from "@/stores/useFilterStore";
 
 const fadeInUp = {
@@ -71,6 +72,11 @@ function NoticesContent() {
     initFromParams,
   } = useFilterStore();
 
+  // API 数据状态
+  const [notices, setNotices] = useState<NoticeItem[]>([]);
+  const [totalResults, setTotalResults] = useState(0);
+  const [loading, setLoading] = useState(true);
+
   // 从 URL 参数初始化 Store（仅首次加载）
   useEffect(() => {
     const params: Record<string, string> = {};
@@ -99,56 +105,41 @@ function NoticesContent() {
     syncUrl(filters, page, viewMode);
   }, [filters, page, viewMode, syncUrl]);
 
-  // 前端筛选 + 排序（后端就绪后改为 API 调用）
-  const filteredNotices = useMemo(() => {
-    let result = mockNotices
-      .filter((n) => {
-        if (filters.keyword) {
-          const kw = filters.keyword.toLowerCase();
-          return (
-            n.title.toLowerCase().includes(kw) ||
-            n.university_name.toLowerCase().includes(kw) ||
-            n.department_name.toLowerCase().includes(kw) ||
-            n.disciplines.some((d) => d.toLowerCase().includes(kw)) ||
-            n.tags.some((t) => t.toLowerCase().includes(kw))
-          );
-        }
-        return true;
-      })
-      .filter((n) => !filters.program_type || n.program_type_key === filters.program_type)
-      .filter((n) => !filters.school_level || n.school_level === filters.school_level)
-      .filter((n) => !filters.province || n.province === filters.province)
-      .filter((n) => !filters.university || n.university_name === filters.university)
-      .filter((n) => !filters.discipline || n.disciplines.some((d) => d.includes(filters.discipline)))
-      .filter((n) => !filters.major || n.disciplines.some((d) => d.includes(filters.major)))
-      .filter((n) => !filters.status || n.status === filters.status);
+  // 从后端 API 获取通知数据
+  useEffect(() => {
+    async function fetchNotices() {
+      setLoading(true);
+      try {
+        const params: Record<string, string | number> = {
+          page,
+          size: pageSize,
+        };
+        if (filters.keyword) params.keyword = filters.keyword;
+        if (filters.program_type) params.type = filters.program_type;
+        if (filters.school_level) params.school_level = filters.school_level;
+        if (filters.province) params.province = filters.province;
+        if (filters.university) params.university = filters.university;
+        if (filters.discipline) params.discipline = filters.discipline;
+        if (filters.major) params.keyword = filters.major; // major 作为关键词搜索
+        if (filters.status) params.status = filters.status;
+        if (filters.sort) params.sort = filters.sort;
 
-    // 排序
-    if (filters.sort === "deadline") {
-      result = [...result].sort((a, b) => {
-        if (!a.registration_end) return 1;
-        if (!b.registration_end) return -1;
-        return new Date(a.registration_end).getTime() - new Date(b.registration_end).getTime();
-      });
-    } else if (filters.sort === "hot") {
-      result = [...result].sort((a, b) => b.view_count - a.view_count);
-    } else {
-      // 默认按发布日期倒序
-      result = [...result].sort((a, b) =>
-        new Date(b.publish_date).getTime() - new Date(a.publish_date).getTime()
-      );
+        const res = await getNotices(params as any);
+        setNotices(res.items);
+        setTotalResults(res.total);
+      } catch {
+        // API 不可用时显示空列表
+        setNotices([]);
+        setTotalResults(0);
+      } finally {
+        setLoading(false);
+      }
     }
-
-    return result;
-  }, [filters]);
+    fetchNotices();
+  }, [filters, page, pageSize]);
 
   // 分页计算
-  const totalResults = filteredNotices.length;
   const totalPages = Math.max(1, Math.ceil(totalResults / pageSize));
-  const paginatedNotices = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredNotices.slice(start, start + pageSize);
-  }, [filteredNotices, page, pageSize]);
 
   // 处理筛选变化
   const handleFiltersChange = (newFilters: FilterValues) => {
@@ -222,40 +213,46 @@ function NoticesContent() {
 
       {/* 通知列表 */}
       <AnimatePresence mode="wait">
-        <motion.div
-          key={`${viewMode}-${page}`}
-          initial="hidden"
-          animate="visible"
-          exit={{ opacity: 0 }}
-          variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
-          className={`mt-6 ${viewMode === "compact" ? "space-y-2" : "space-y-4"}`}
-        >
-          {paginatedNotices.length > 0 ? (
-            paginatedNotices.map((notice) => (
-              <motion.div key={notice.id} variants={fadeInUp}>
-                {viewMode === "compact" ? (
-                  <CompactInfoCard notice={notice} />
-                ) : (
-                  <InfoCard notice={notice} />
-                )}
+        {loading ? (
+          <div className="mt-6">
+            <NoticeListSkeleton count={5} />
+          </div>
+        ) : (
+          <motion.div
+            key={`${viewMode}-${page}`}
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0 }}
+            variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
+            className={`mt-6 ${viewMode === "compact" ? "space-y-2" : "space-y-4"}`}
+          >
+            {notices.length > 0 ? (
+              notices.map((notice) => (
+                <motion.div key={notice.id} variants={fadeInUp}>
+                  {viewMode === "compact" ? (
+                    <CompactInfoCard notice={notice} />
+                  ) : (
+                    <InfoCard notice={notice} />
+                  )}
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="py-20 text-center"
+              >
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <span className="text-2xl">🔍</span>
+                </div>
+                <p className="text-lg font-medium text-muted-foreground">暂无符合条件的通知</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  试试调整筛选条件或搜索关键词
+                </p>
               </motion.div>
-            ))
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="py-20 text-center"
-            >
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                <span className="text-2xl">🔍</span>
-              </div>
-              <p className="text-lg font-medium text-muted-foreground">暂无符合条件的通知</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                试试调整筛选条件或搜索关键词
-              </p>
-            </motion.div>
-          )}
-        </motion.div>
+            )}
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* 分页 */}
