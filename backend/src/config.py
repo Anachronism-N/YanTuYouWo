@@ -16,6 +16,16 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000"
 
+    # JWT
+    JWT_SECRET_KEY: str = "yantu-dev-secret-change-in-production-2026"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRE_DAYS: int = 7
+
+    # AI / LLM
+    OPENAI_API_KEY: str = ""
+    OPENAI_BASE_URL: str = "https://api.siliconflow.cn/v1"
+    OPENAI_MODEL: str = "Qwen/Qwen2.5-7B-Instruct"
+
     # 应用
     DEBUG: bool = True
 
@@ -28,8 +38,13 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         """获取数据库 URL，默认使用爬虫系统的 SQLite 数据库"""
         if self.DATABASE_URL:
-            return self.DATABASE_URL
-        # 默认使用爬虫系统的数据库（相对于 backend/ 目录）
+            url = self.DATABASE_URL
+            # 兼容云平台常见的 postgres:// 前缀
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif url.startswith("postgresql://") and "+asyncpg" not in url:
+                url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            return url
         db_path = Path(__file__).parent.parent.parent / "crawl" / "data" / "large_scale_test.db"
         return f"sqlite+aiosqlite:///{db_path}"
 
