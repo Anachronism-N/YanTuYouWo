@@ -72,7 +72,7 @@ export default function SchoolsPage() {
   const activeFilterCount = [level, province].filter(Boolean).length;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -91,9 +91,9 @@ export default function SchoolsPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <GraduationCap className="h-5 w-5" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">院校库</h1>
+          <h1 className="text-2xl font-bold tracking-tight">院校库</h1>
         </div>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           985/211/双一流院校信息，了解目标院校详情
         </p>
       </div>
@@ -214,9 +214,16 @@ export default function SchoolsPage() {
 
       {/* 院校网格 */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-3 text-muted-foreground">加载中...</span>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="rounded-xl border bg-card p-4 animate-pulse">
+              <div className="flex items-center gap-2.5">
+                <div className="h-10 w-10 rounded-xl bg-muted" />
+                <div className="flex-1"><div className="h-4 w-24 bg-muted rounded" /><div className="h-3 w-16 bg-muted rounded mt-1.5" /></div>
+              </div>
+              <div className="mt-3 pt-2.5 border-t border-dashed flex gap-4"><div className="h-3 w-12 bg-muted rounded" /><div className="h-3 w-12 bg-muted rounded" /></div>
+            </div>
+          ))}
         </div>
       ) : (
         <motion.div

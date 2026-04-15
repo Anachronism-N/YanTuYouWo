@@ -2,24 +2,36 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from sqlalchemy import select, func, or_, and_, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.notice import AdmissionNotice
 from src.models.university import University, Department
 from src.schemas.notice import NoticeItem, NoticeDetail, NoticeListResponse
+from src.services.data_clean_service import data_clean_service
+
+
+def _clean_str(value: str | None) -> str:
+    """清洗字符串：null/None/空值 → 空字符串"""
+    if not value:
+        return ""
+    s = str(value).strip()
+    return "" if s in ("null", "None") else s
 
 
 # 数据库中的 program_type 到前端 program_type_key 的映射
 PROGRAM_TYPE_KEY_MAP = {
     "夏令营": "summer_camp",
     "预推免": "pre_admission",
-    "宣讲会": "seminar",
+    "招生简章": "admission_guide",
     "入营名单": "admission_list",
-    "直博": "other",
-    "硕博连读": "other",
-    "其他": "other",
+    "拟录取": "offer_list",
+    "直博": "direct_phd",
+    "硕博连读": "combined_degree",
+    "招生宣讲": "seminar",
+    "宣讲会": "seminar",
+    "其他": "summer_camp",
 }
 
 
@@ -57,6 +69,33 @@ def _notice_to_item(notice: AdmissionNotice, university: University, department:
     program_type = notice.program_type or "其他"
     program_type_key = PROGRAM_TYPE_KEY_MAP.get(program_type, "other")
 
+    # 清洗标题（移除日期前缀）
+    clean_title = data_clean_service.clean_title(notice.title)
+
+    # 补全缺失的 publish_date
+    publish_date = notice.publish_date
+    if not publish_date:
+        publish_date = data_clean_service.extract_date_from_title(notice.title)
+        if not publish_date and notice.raw_content:
+            publish_date = data_clean_service.extract_date_from_content(notice.raw_content[:500])
+
+    # 格式化学科列表（确保是字符串列表，去除 null/"null"）
+    disciplines = notice.disciplines or []
+    if isinstance(disciplines, list):
+        disciplines = [str(d) for d in disciplines if _clean_str(str(d))]
+    else:
+        disciplines = []
+
+    # 格式化 summary（确保非空且简洁）
+    summary = _clean_str(notice.summary) or clean_title
+    if len(summary) > 200:
+        summary = summary[:197] + "..."
+
+    # 格式化 quota（去除 null）
+    quota = notice.quota
+    if quota in (None, "null", "None", ""):
+        quota = None
+
     # 构建标签
     tags = []
     if notice.year:
@@ -65,25 +104,27 @@ def _notice_to_item(notice: AdmissionNotice, university: University, department:
         tags.append(university.province)
     if program_type != "其他":
         tags.append(program_type)
+    if notice.target_degree and notice.target_degree != "硕博":
+        tags.append(notice.target_degree)
 
     return NoticeItem(
         id=notice.id,
-        title=notice.title,
+        title=clean_title,
         university_name=university.name,
         department_name=department.name if department else "未知学院",
         school_level=university.level,
         program_type=program_type,
         program_type_key=program_type_key,
-        target_degree=notice.target_degree or "硕士",
-        disciplines=notice.disciplines or [],
-        quota=notice.quota,
+        target_degree=notice.target_degree or "硕博",
+        disciplines=disciplines,
+        quota=quota,
         registration_start=notice.registration_start.isoformat() if notice.registration_start else None,
         registration_end=notice.registration_end.isoformat() if notice.registration_end else None,
         camp_start=notice.camp_start.isoformat() if notice.camp_start else None,
         camp_end=notice.camp_end.isoformat() if notice.camp_end else None,
-        publish_date=notice.publish_date.isoformat() if notice.publish_date else "",
+        publish_date=publish_date.isoformat() if publish_date else "",
         status=_compute_notice_status(notice),
-        summary=notice.summary or notice.title,
+        summary=summary,
         province=university.province,
         city=university.city,
         tags=tags,
@@ -96,14 +137,23 @@ def _notice_to_item(notice: AdmissionNotice, university: University, department:
 def _notice_to_detail(notice: AdmissionNotice, university: University, department: Department | None) -> NoticeDetail:
     """将数据库模型转换为前端 NoticeDetail"""
     item = _notice_to_item(notice, university, department)
+
+    requirements = _clean_str(notice.requirements)
+    requirements = data_clean_service.clean_raw_content(requirements) if requirements else ""
+    contact = _clean_str(notice.contact)
+    reg_url = _clean_str(notice.registration_url)
+
+    images = data_clean_service.clean_images(notice.images)
+
     return NoticeDetail(
         **item.model_dump(),
-        requirements=notice.requirements,
-        registration_url=notice.registration_url,
+        requirements=requirements,
+        registration_url=reg_url,
         official_url=notice.source_url,
-        contact=notice.contact,
-        raw_content=notice.raw_content or "",
+        contact=contact,
+        raw_content=data_clean_service.clean_raw_content(notice.raw_content or ""),
         source_url=notice.source_url,
+        images=images,
         created_at=notice.created_at.isoformat() if notice.created_at else "",
         prev_year_quota=None,
     )
@@ -138,18 +188,9 @@ async def get_notices(
     # 通知类型筛选
     if type and type != "all":
         # 前端传的是 key（如 summer_camp），需要映射回中文
-        type_map = {v: k for k, v in PROGRAM_TYPE_KEY_MAP.items() if v != "other"}
+        type_map = {v: k for k, v in PROGRAM_TYPE_KEY_MAP.items()}
         if type in type_map:
             conditions.append(AdmissionNotice.program_type == type_map[type])
-        elif type == "other":
-            conditions.append(
-                or_(
-                    AdmissionNotice.program_type == "其他",
-                    AdmissionNotice.program_type == "直博",
-                    AdmissionNotice.program_type == "硕博连读",
-                    AdmissionNotice.program_type.is_(None),
-                )
-            )
 
     # 学校层次筛选
     if school_level:
@@ -183,11 +224,6 @@ async def get_notices(
     if conditions:
         base_query = base_query.where(and_(*conditions))
 
-    # 统计总数
-    count_query = select(func.count()).select_from(base_query.subquery())
-    total_result = await db.execute(count_query)
-    total = total_result.scalar() or 0
-
     # 排序
     if sort == "latest":
         base_query = base_query.order_by(desc(AdmissionNotice.publish_date), desc(AdmissionNotice.id))
@@ -196,18 +232,21 @@ async def get_notices(
     elif sort == "hot":
         base_query = base_query.order_by(desc(AdmissionNotice.id))
 
-    # 分页
-    offset = (page - 1) * size
-    base_query = base_query.offset(offset).limit(size)
-
-    result = await db.execute(base_query)
-    rows = result.all()
-
-    items = [_notice_to_item(notice, uni, dept) for notice, uni, dept in rows]
-
-    # 如果需要状态筛选，在内存中过滤（因为状态是计算出来的）
+    # 状态是根据日期计算的，需要先全量查出再内存过滤后分页
     if status:
-        items = [item for item in items if item.status == status]
+        all_result = await db.execute(base_query)
+        all_rows = all_result.all()
+        all_items = [_notice_to_item(notice, uni, dept) for notice, uni, dept in all_rows]
+        filtered = [item for item in all_items if item.status == status]
+        total = len(filtered)
+        offset = (page - 1) * size
+        items = filtered[offset : offset + size]
+    else:
+        count_query = select(func.count()).select_from(base_query.subquery())
+        total = (await db.execute(count_query)).scalar() or 0
+        offset = (page - 1) * size
+        result = await db.execute(base_query.offset(offset).limit(size))
+        items = [_notice_to_item(notice, uni, dept) for notice, uni, dept in result.all()]
 
     # 获取可用的筛选选项
     provinces_query = select(University.province).distinct().order_by(University.province)

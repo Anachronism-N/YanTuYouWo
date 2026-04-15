@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AppHeader from "@/components/layout/AppHeader";
 import AppFooter from "@/components/layout/AppFooter";
 import ThemeProvider from "@/components/layout/ThemeProvider";
+import DynamicBackground from "@/components/layout/DynamicBackground";
+import AIChatbot from "@/components/layout/AIChatbot";
+import ScrollToTop from "@/components/layout/ScrollToTop";
+import ToasterProvider from "@/components/layout/ToasterProvider";
+import RouteProgress from "@/components/layout/RouteProgress";
+import CommandSearch from "@/components/layout/CommandSearch";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
-
-// 懒加载重型组件 — 不阻塞首屏渲染（Server Component 中不能用 ssr:false）
-const DynamicBackground = dynamic(() => import("@/components/layout/DynamicBackground"));
-const AIChatbot = dynamic(() => import("@/components/layout/AIChatbot"));
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
     <html
       lang="zh-CN"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      style={{ fontFamily: "'Noto Sans SC', var(--font-geist-sans), system-ui, sans-serif" }}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col transition-theme">
@@ -48,6 +50,10 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <AppFooter />
           <AIChatbot />
+          <ScrollToTop />
+          <ToasterProvider />
+          <RouteProgress />
+          <CommandSearch />
         </ThemeProvider>
       </body>
     </html>

@@ -652,6 +652,7 @@ export const mockUserProfile: UserProfile = {
   ],
   research_interests: ["人工智能", "机器学习", "自然语言处理"],
   is_onboarded: true,
+  role: "admin" as const,
   created_at: "2026-01-15T08:00:00Z",
 };
 

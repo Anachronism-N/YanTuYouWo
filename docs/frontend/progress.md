@@ -1640,3 +1640,174 @@ frontend/
   - 使用 `translateX(33.33%)` 的 `linear infinite` 动画实现**无缝循环飘动**
   - 3 层雾气纹理，不同速度（14s/18s/25s）和方向（正/反向）
   - 底部浓雾 + 呼吸感覆盖层增加层次
+
+---
+
+## 2026-04-13 更新 — 前端优化迭代
+
+### 1. 品牌资产整理
+
+- 将 `logo.png`、`slogan.png`、`slogan_AD.png` 从项目根目录迁移到 `frontend/public/images/`
+- 更新引用路径：`AppFooter.tsx`、`auth/login/page.tsx`、`auth/register/page.tsx`
+- 导航栏和底部栏的 Logo 从 Lucide `GraduationCap` 图标替换为真实品牌 Logo 图片
+
+### 2. 动态天气背景彻底重写
+
+**文件：** `src/components/layout/DynamicBackground.tsx`（763 行 → ~350 行）
+
+**解决的问题：**
+- 之前使用 `dangerouslySetInnerHTML` 注入 keyframes，有 XSS 风险且不可维护
+- SVG 随机生成的雨/雪/雾纹理导致大量 GPU 合成层和卡顿
+- 天气 API 无缓存，频繁请求 `wttr.in` 导致超时
+
+**改动要点：**
+- 所有 keyframes 迁移到 `globals.css`，移除 `dangerouslySetInnerHTML`
+- 雨/雪效果从 SVG 背景生成改为 `repeating-linear-gradient`（零 DOM、零随机计算）
+- 云朵从 `box-shadow` 改为 `radial-gradient` 椭圆体（更自然、更轻量）
+- 雾天从 3 层 SVG 纹理 300% 宽度改为 `radial-gradient` 多层叠加 + `translateX` 漂移
+- 晴天/雷暴使用 Tailwind 色板 (`#bae6fd`, `#0f172a` 等) 替代 oklch 动态计算
+- 天气 API 结果缓存到 `localStorage`（1 小时过期），轮询间隔从 10 分钟延长到 30 分钟
+- 闪电效果 opacity 从 0.08-0.12 提升到 0.3-0.6，明显可见
+
+### 3. 简历工坊 — 完整示例简历
+
+**文件：** `src/app/ai/resume/page.tsx`
+
+新增 `sampleResume` 完整虚假数据（北京邮电大学 → 清华大学深圳国际研究生院）：
+
+| 模块 | 内容 |
+|------|------|
+| 基本信息 | 陈思远，男，汉族，北邮计科，目标清华深研院电子信息（AI 方向） |
+| 教育经历 | 北京邮电大学 2021-2025，GPA 3.88/4.0，排名 6/210 |
+| 科研经历 | 2 段（国家自然科学基金项目 + 校级 URT 项目） |
+| 论文成果 | 2 篇（Pattern Recognition SCI 二区已发表 + CIKM CCF-B 在审） |
+| 获奖经历 | 5 项（数学建模国一、ACM 银牌、国家奖学金、互联网+省金、优秀学生干部） |
+| 实习经历 | 腾讯 AI Lab 研究实习 3 个月 |
+| 技能 | Python 5/5、PyTorch 5/5、C++ 4/5 等 7 项 |
+| 语言 | CET-6 586 分、雅思 7.0 |
+| 自我评价 | 完整 2 段描述 |
+
+默认创建的「我的第一份简历」自动使用 `sampleResume` 数据填充，可直接预览排版效果。
+
+### 4. 新增竞赛信息页
+
+**文件：** `src/app/info/competitions/page.tsx`（新增）
+
+- 10 项保研相关竞赛 Mock 数据
+- 筛选：级别（国际级/国家级/省级）、状态、学科门类、关键词搜索
+- 每个竞赛卡片展示：级别标签、主办单位、报名/比赛时间、参赛人数、学科标签、含金量星级评分
+- 特色「保研加分说明」高亮区域
+- 官网外链 + 收藏按钮
+
+### 5. 新增期刊会议页
+
+**文件：** `src/app/info/journals/page.tsx`（新增）
+
+- 期刊/会议双 Tab 切换
+- 10 本期刊 Mock 数据（TPAMI、PR、KBS、ASOC、ESWA、计算机学报、软件学报、Neurocomputing、经济研究、管理世界）
+- 8 个学术会议 Mock 数据（AAAI、CVPR、ACL、IJCAI、ICML、KDD、CIKM、COLING）
+- 每项展示：级别标签、影响因子/审稿周期/录用率、「本科生友好度」星级评分
+- 投稿建议高亮提示框
+
+### 6. 导航栏更新
+
+**文件：** `src/lib/constants.ts`
+
+「保研信息」下拉菜单新增两项：
+- 竞赛信息 → `/info/competitions`
+- 期刊会议 → `/info/journals`
+
+### 文件变更总览
+
+| 文件 | 操作 |
+|------|------|
+| `public/images/logo.png` | 新增（从根目录迁移） |
+| `public/images/slogan.png` | 新增 |
+| `public/images/slogan_AD.png` | 新增 |
+| `src/components/layout/DynamicBackground.tsx` | 彻底重写（763→350 行） |
+| `src/app/globals.css` | 新增 16 条背景动画 keyframes |
+| `src/app/ai/resume/page.tsx` | 新增 sampleResume 完整数据 |
+| `src/app/info/competitions/page.tsx` | 新增（竞赛信息页） |
+| `src/app/info/journals/page.tsx` | 新增（期刊会议页） |
+| `src/lib/constants.ts` | 导航新增 2 项 |
+| `src/components/layout/AppHeader.tsx` | Logo 改用真实图片 |
+| `src/components/layout/AppFooter.tsx` | Logo 改用真实图片 + 路径更新 |
+| `src/app/auth/login/page.tsx` | 图片路径更新 |
+| `src/app/auth/register/page.tsx` | 图片路径更新 |
+| `docs/frontend/optimization-plan.md` | 新增优化计划文档 |
+
+---
+
+## 2026-04-13 更新 — 天气美化 + 管理员系统 + 用户编辑
+
+### 1. 天气背景持续优化
+
+#### 云朵渲染改用 CSS 纹理叠加
+
+- 从 web-weather 项目复制 3 张云朵 PNG 纹理（`clouds_1.png`、`clouds_2.png`、`clouds_3.png`）
+- 新增 `CloudOverlay` 组件：3 层云朵纹理 + Web Animations API 横向滚动
+- 多云/雨天/雷暴天气自动叠加 CloudOverlay，密度根据天气类型调整（多云 0.5 / 雨天 0.7 / 雷暴 0.9）
+- Canvas 中移除了自绘云朵逻辑，改由 CSS 层负责
+
+#### Canvas 粒子系统参数微调
+
+- 太阳光晕半径: 35% → 70% 屏幕
+- 太阳使用 `globalCompositeOperation: 'screen'` 加法混合
+- 新增 5 个镜头光斑（lens flares）
+- 闪电线宽: 4/1.5px → 8/2.5px
+- 雨滴不透明度: 0.22 → 0.3-0.5
+- 雾气团半径上限: 350px → 400px
+
+### 2. 管理员系统
+
+#### 用户角色
+
+- `UserProfile` 类型新增 `role: "user" | "admin"` 字段
+- Mock 用户数据默认设为 `admin` 角色（便于开发测试）
+- 导航栏用户菜单：admin 用户显示「管理后台」入口
+
+#### 管理后台页面
+
+| 页面 | 路径 | 功能 |
+|------|------|------|
+| **仪表盘** | `/admin` | 统计卡片 + 快捷操作 + 最近动态 |
+| **通知管理** | `/admin/notices` | 通知 CRUD 表格 + 筛选 + 创建对话框 |
+| **内容上传** | `/admin/upload` | 5 类内容上传（课程/模板/资料/题目/经验帖）+ 拖拽上传 + 信息表单 |
+
+#### 管理后台布局
+
+- 左侧固定侧边栏：11 个导航项
+- 非 admin 用户自动跳转到登录页
+- 路由保护通过 `useEffect` + `router.replace` 实现
+
+### 3. 简历模板更新
+
+- 删除不可用的「简约清新」模板
+- 新增「优雅学院」模板：衬线字体 + 渐变装饰线 + 菱形分隔符 + 虚线延伸
+- 新增「极简线条」模板：纯黑字体 + 超细灰线 + 最大化留白
+- 「学术经典」模板美化：双线分隔改为上粗下细 + 竖线分隔个人信息 + 标题右侧双线延伸
+- 支持 `**加粗**` Markdown 语法：描述/贡献/成果/自我评价字段
+
+### 4. 后端开发文档更新
+
+- `docs/backend/design.md` 新增 Phase 2.5 管理员系统章节
+- 定义了 10 个管理员 API 端点
+- 明确了 `require_admin` 权限装饰器需求
+
+### 文件变更
+
+| 文件 | 操作 |
+|------|------|
+| `public/images/clouds_1.png` | 新增（云朵纹理） |
+| `public/images/clouds_2.png` | 新增（云朵纹理） |
+| `public/images/clouds_3.png` | 新增（云朵纹理） |
+| `src/components/layout/DynamicBackground.tsx` | 新增 CloudOverlay + Canvas 参数调优 |
+| `src/types/user.ts` | 新增 `role` 字段 |
+| `src/app/admin/layout.tsx` | 新增（管理后台布局 + 权限检查） |
+| `src/app/admin/page.tsx` | 新增（仪表盘） |
+| `src/app/admin/notices/page.tsx` | 新增（通知 CRUD） |
+| `src/app/admin/upload/page.tsx` | 新增（内容上传） |
+| `src/components/layout/AppHeader.tsx` | 用户菜单新增管理后台入口 |
+| `src/lib/mock-data.ts` | Mock 用户添加 admin 角色 |
+| `src/app/ai/resume/page.tsx` | 模板美化 + 加粗支持 |
+| `docs/backend/design.md` | 新增 Phase 2.5 管理员 API 规划 |

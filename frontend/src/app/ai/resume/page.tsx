@@ -54,6 +54,99 @@ const emptyResume: ResumeData = {
   modules: DEFAULT_MODULES.map((m) => ({ ...m })),
 };
 
+const sampleResume: ResumeData = {
+  basic: {
+    name: "陈思远", gender: "男", ethnicity: "汉族", birth_date: "2003-06",
+    phone: "138-0013-8000", email: "chensiyuan@bupt.edu.cn", wechat: "siyuan_chen03",
+    political_status: "中共预备党员", hometown: "广东省深圳市", current_address: "北京市海淀区西土城路 10 号",
+    website: "https://siyuanchen.me", github: "https://github.com/siyuan-chen",
+    target_school: "清华大学深圳国际研究生院", target_major: "电子信息（人工智能方向）", photo_url: "",
+  },
+  education: [
+    {
+      id: "edu1", school: "北京邮电大学", department: "计算机学院（国家示范性软件学院）",
+      major: "计算机科学与技术", degree: "本科" as const, duration: "4",
+      start_date: "2021-09", end_date: "2025-06",
+      gpa: "3.88", gpa_max: "4.0", rank: "6", total_students: "210",
+      courses: "机器学习(97)、深度学习(95)、计算机视觉(93)、数据结构与算法(96)、概率论与数理统计(92)、线性代数(94)、操作系统(91)、计算机网络(90)",
+      thesis_title: "基于多模态特征融合的细粒度图像识别方法研究", minor: "",
+    },
+  ],
+  research: [
+    {
+      id: "res1", title: "面向低资源场景的跨模态检索与生成", project_type: "国家级" as const,
+      role: "核心成员（排名 2/5）", advisor: "李明教授",
+      lab: "北京邮电大学智能信息处理实验室", start_date: "2023-06", end_date: "2024-12",
+      description: "参与国家自然科学基金面上项目，研究低资源条件下的跨模态检索与生成方法。提出基于对比学习的跨模态对齐框架，在图文检索任务上取得显著提升。",
+      contribution: "1) 设计并实现了基于动态温度调节的对比学习损失函数，Recall@1 提升 8.3%；2) 构建了包含 5 万对图文数据的低资源基准数据集；3) 撰写并投稿学术论文 1 篇。",
+      outcomes: "发表 SCI 二区论文 1 篇；提交发明专利 1 项（实审中）",
+      technologies: "PyTorch, Transformers, CLIP, BLIP-2, LoRA, Distributed Training",
+    },
+    {
+      id: "res2", title: "基于图神经网络的社交网络异常检测", project_type: "校级" as const,
+      role: "项目负责人", advisor: "王强副教授",
+      lab: "北京邮电大学网络智能研究中心", start_date: "2022-09", end_date: "2023-05",
+      description: "北京邮电大学大学生创新创业训练计划（URT）国家级立项。针对社交网络中虚假账号和恶意行为检测问题，提出结合时序特征和图结构特征的检测框架。",
+      contribution: "1) 独立设计了融合 GAT 与 LSTM 的异常检测模型架构；2) 在 Twitter Bot 数据集上 F1-score 达到 94.2%，超过当时 SOTA 2.1%；3) 项目获评校级优秀结题。",
+      outcomes: "大学生创新创业训练计划优秀结题；投稿 CCF-B 会议论文 1 篇",
+      technologies: "PyTorch Geometric, DGL, NetworkX, Scikit-learn, Neo4j",
+    },
+  ],
+  publications: [
+    {
+      id: "pub1", title: "Dynamic Temperature Contrastive Learning for Low-Resource Cross-Modal Retrieval",
+      type: "论文" as const, venue: "Pattern Recognition",
+      author_order: "第二作者", all_authors: "Ming Li, Siyuan Chen*, Qiang Wang, et al.",
+      date: "2024-08", identifier: "DOI: 10.1016/j.patcog.2024.xxxxx",
+      status: "已发表" as const, sci_zone: "二区" as const, impact_factor: "8.0",
+      ccf_rank: "B" as const, is_corresponding: false,
+      abstract_text: "We propose a dynamic temperature contrastive learning framework for cross-modal retrieval under low-resource scenarios, achieving 8.3% improvement on Recall@1.",
+    },
+    {
+      id: "pub2", title: "Temporal-Structural Fusion Graph Network for Social Bot Detection",
+      type: "论文" as const, venue: "CIKM 2024",
+      author_order: "第一作者", all_authors: "Siyuan Chen, Qiang Wang, et al.",
+      date: "2024-03", identifier: "",
+      status: "在审" as const, sci_zone: "" as const, impact_factor: "",
+      ccf_rank: "B" as const, is_corresponding: false,
+      abstract_text: "A novel framework combining temporal user behavior features with graph structural features for social network bot detection.",
+    },
+  ],
+  awards: [
+    { id: "aw1", name: "全国大学生数学建模竞赛", level: "国家级" as const, rank: "一等奖" as const, issuer: "中国工业与应用数学学会", date: "2023-11", category: "学科竞赛" as const, note: "队长，负责建模与编程" },
+    { id: "aw2", name: "ACM-ICPC 亚洲区域赛（南京站）", level: "国际级" as const, rank: "银奖" as const, issuer: "ACM/ICPC Foundation", date: "2023-10", category: "学科竞赛" as const, note: "三人团队赛，排名 38/320" },
+    { id: "aw3", name: "国家奖学金", level: "国家级" as const, rank: "" as const, issuer: "教育部", date: "2023-10", category: "奖学金" as const, note: "2022-2023 学年" },
+    { id: "aw4", name: "北京邮电大学优秀学生干部", level: "校级" as const, rank: "" as const, issuer: "北京邮电大学", date: "2023-06", category: "荣誉称号" as const, note: "" },
+    { id: "aw5", name: "\"互联网+\"大学生创新创业大赛", level: "省级" as const, rank: "金奖" as const, issuer: "北京市教育委员会", date: "2024-06", category: "科技创新" as const, note: "项目负责人" },
+  ],
+  experiences: [
+    {
+      id: "exp1", organization: "腾讯", industry: "互联网/人工智能",
+      position: "AI Lab 研究实习生", type: "实习" as const,
+      start_date: "2024-06", end_date: "2024-09",
+      description: "参与多模态大模型的研发工作，负责视觉-语言模型的数据预处理与模型微调模块。",
+      achievements: "1) 优化了训练数据清洗 pipeline，数据质量评分提升 12%；2) 实现基于 QLoRA 的高效微调方案，训练显存占用降低 60%；3) 协助完成内部技术分享 1 次。",
+      tools: "PyTorch, DeepSpeed, Transformers, Weights & Biases, Docker",
+    },
+  ],
+  skills: [
+    { id: "sk1", category: "编程语言", content: "Python", proficiency: 5 },
+    { id: "sk2", category: "编程语言", content: "C/C++", proficiency: 4 },
+    { id: "sk3", category: "开发框架", content: "PyTorch / PyTorch Lightning", proficiency: 5 },
+    { id: "sk4", category: "开发框架", content: "Hugging Face Transformers", proficiency: 4 },
+    { id: "sk5", category: "工具软件", content: "Git / Linux / Docker / LaTeX", proficiency: 4 },
+    { id: "sk6", category: "专业技能", content: "机器学习 / 深度学习 / 计算机视觉 / NLP", proficiency: 4 },
+    { id: "sk7", category: "数据库", content: "MySQL / Redis / Neo4j", proficiency: 3 },
+  ],
+  languages: [
+    { id: "lg1", name: "英语", test: "CET-6" as const, score: "586", proficiency: "熟练" as const },
+    { id: "lg2", name: "英语", test: "雅思" as const, score: "7.0", proficiency: "熟练" as const },
+  ],
+  self_evaluation: "本科期间系统学习计算机科学核心课程，GPA 3.88/4.0（排名 6/210）。研究方向聚焦多模态学习与图神经网络，以第一/二作者发表/投稿 SCI/CCF 论文 2 篇。具有扎实的编程能力和丰富的科研实践经验，曾获国家奖学金、数学建模国一、ACM-ICPC 银牌等荣誉。在腾讯 AI Lab 实习期间参与多模态大模型研发，积累了工业级项目经验。希望在清华大学深圳国际研究生院继续深耕人工智能领域的研究。",
+  layout: { ...DEFAULT_LAYOUT },
+  modules: DEFAULT_MODULES.map((m) => ({ ...m })),
+};
+
 const genId = () => Math.random().toString(36).slice(2, 10);
 
 /* ================================================================
@@ -67,11 +160,13 @@ interface ResumeEntry {
   updatedAt: string;
 }
 
-const createNewResume = (name: string): ResumeEntry => ({
+const createNewResume = (name: string, useSample = false): ResumeEntry => ({
   id: genId(),
   name,
   template: "academic",
-  data: { ...emptyResume, layout: { ...DEFAULT_LAYOUT }, modules: DEFAULT_MODULES.map((m) => ({ ...m })) },
+  data: useSample
+    ? { ...sampleResume, layout: { ...DEFAULT_LAYOUT }, modules: DEFAULT_MODULES.map((m) => ({ ...m })) }
+    : { ...emptyResume, layout: { ...DEFAULT_LAYOUT }, modules: DEFAULT_MODULES.map((m) => ({ ...m })) },
   updatedAt: new Date().toLocaleDateString("zh-CN"),
 });
 
@@ -89,10 +184,13 @@ const mockSuggestions: AISuggestion[] = [
 /* ================================================================
    模板配置
    ================================================================ */
-const TEMPLATES: { id: ResumeTemplate; name: string; desc: string; gradient: string; preview: string; features: string[] }[] = [
-  { id: "academic", name: "学术经典", desc: "严谨规范，适合学术型保研", gradient: "from-blue-600 to-cyan-500", preview: "蓝色主题 · 双线标题 · 经典学术排版", features: ["双线分隔标题", "时间右对齐", "层次分明", "适合理工科"] },
-  { id: "concise", name: "简约清新", desc: "留白舒适，一页纸精炼简历", gradient: "from-emerald-600 to-teal-500", preview: "绿色主题 · 细线分隔 · 清新留白", features: ["细线分隔", "大量留白", "信息精炼", "适合文商科"] },
-  { id: "modern", name: "现代创意", desc: "左侧色带，双栏设计感强", gradient: "from-violet-600 to-purple-500", preview: "紫色主题 · 色块标题 · 左侧色带", features: ["色块标题栏", "左侧装饰带", "圆角卡片", "适合设计/创意"] },
+const TEMPLATES: { id: ResumeTemplate; name: string; desc: string; gradient: string; features: string[] }[] = [
+  { id: "academic", name: "学术经典", desc: "严谨规范，适合学术型保研", gradient: "from-blue-600 to-cyan-500", features: ["双线分隔标题", "时间右对齐", "适合理工科"] },
+  { id: "modern", name: "现代双栏", desc: "左侧色带，双栏设计感强", gradient: "from-violet-600 to-purple-500", features: ["左侧信息栏", "技能进度条", "适合创意方向"] },
+  { id: "professional", name: "专业商务", desc: "深色标题栏，紧凑信息密度", gradient: "from-slate-700 to-zinc-600", features: ["深色头部", "高信息密度", "适合金融/管理"] },
+  { id: "elegant", name: "优雅学院", desc: "衬线标题+精致排版", gradient: "from-amber-600 to-orange-500", features: ["衬线标题", "圆点装饰", "适合文科/社科"] },
+  { id: "minimal", name: "极简线条", desc: "最大化留白，一页纸精炼", gradient: "from-emerald-600 to-teal-500", features: ["超简洁", "大量留白", "适合一页纸"] },
+  { id: "latex", name: "LaTeX 学术", desc: "仿 LaTeX 排版，衬线字体", gradient: "from-gray-700 to-gray-900", features: ["Computer Modern 风", "严谨排版", "适合学术投稿"] },
 ];
 
 /* ================================================================
@@ -133,7 +231,7 @@ const THEME_COLORS = ["#2563eb", "#0891b2", "#059669", "#7c3aed", "#dc2626", "#d
 export default function ResumePage() {
   /* ---- 多简历管理 ---- */
   const [resumeList, setResumeList] = useState<ResumeEntry[]>([
-    { ...createNewResume("我的第一份简历"), updatedAt: "2026-03-31" },
+    { ...createNewResume("我的第一份简历", true), updatedAt: "2026-03-31" },
   ]);
   const [activeResumeId, setActiveResumeId] = useState<string | null>(resumeList[0]?.id || null);
   const [showManager, setShowManager] = useState(false);
@@ -658,8 +756,8 @@ function ResearchSection({ items, onAdd, onRemove, onUpdate }: { items: Research
                 <Field label="开始时间" value={item.start_date} onChange={(v) => onUpdate(item.id, { start_date: v })} type="month" placeholder="" />
                 <Field label="结束时间" value={item.end_date} onChange={(v) => onUpdate(item.id, { end_date: v })} type="month" placeholder="" />
                 <Field label="使用技术/方法" value={item.technologies} onChange={(v) => onUpdate(item.id, { technologies: v })} placeholder="如：PyTorch, Transformer, GAN" className="sm:col-span-2 lg:col-span-3" />
-                <Field label="项目描述" value={item.description} onChange={(v) => onUpdate(item.id, { description: v })} placeholder="简要描述项目背景、目标和方法" multiline className="sm:col-span-2 lg:col-span-3" />
-                <Field label="个人贡献" value={item.contribution} onChange={(v) => onUpdate(item.id, { contribution: v })} placeholder="描述你的具体贡献和成果" multiline className="sm:col-span-2 lg:col-span-3" />
+                <Field label="项目描述" value={item.description} onChange={(v) => onUpdate(item.id, { description: v })} placeholder="简要描述项目背景、目标和方法（用 **文字** 加粗）" multiline className="sm:col-span-2 lg:col-span-3" />
+                <Field label="个人贡献" value={item.contribution} onChange={(v) => onUpdate(item.id, { contribution: v })} placeholder="描述你的具体贡献和成果（用 **文字** 加粗）" multiline className="sm:col-span-2 lg:col-span-3" />
                 <Field label="项目成果" value={item.outcomes} onChange={(v) => onUpdate(item.id, { outcomes: v })} placeholder="如：发表论文 1 篇、申请专利 1 项" className="sm:col-span-2 lg:col-span-3" />
               </div>
             </ItemCard>
@@ -750,8 +848,8 @@ function ExperienceSection({ items, onAdd, onRemove, onUpdate }: { items: Experi
                 <Field label="开始时间" value={item.start_date} onChange={(v) => onUpdate(item.id, { start_date: v })} type="month" placeholder="" />
                 <Field label="结束时间" value={item.end_date} onChange={(v) => onUpdate(item.id, { end_date: v })} type="month" placeholder="" />
                 <Field label="使用工具/技术" value={item.tools} onChange={(v) => onUpdate(item.id, { tools: v })} placeholder="如：Python, TensorFlow, Docker" className="sm:col-span-2 lg:col-span-3" />
-                <Field label="工作描述" value={item.description} onChange={(v) => onUpdate(item.id, { description: v })} placeholder="描述你的工作内容" multiline className="sm:col-span-2 lg:col-span-3" />
-                <Field label="主要成果" value={item.achievements} onChange={(v) => onUpdate(item.id, { achievements: v })} placeholder="描述你取得的成果和业绩" multiline className="sm:col-span-2 lg:col-span-3" />
+                <Field label="工作描述" value={item.description} onChange={(v) => onUpdate(item.id, { description: v })} placeholder="描述你的工作内容（用 **文字** 加粗）" multiline className="sm:col-span-2 lg:col-span-3" />
+                <Field label="主要成果" value={item.achievements} onChange={(v) => onUpdate(item.id, { achievements: v })} placeholder="描述你取得的成果和业绩（用 **文字** 加粗）" multiline className="sm:col-span-2 lg:col-span-3" />
               </div>
             </ItemCard>
           ))}
@@ -1031,174 +1129,295 @@ function ResumePreview({ resume, template }: { resume: ResumeData; template: Res
     );
   }
 
-  const tc = layout.themeColor;
+  const TC: Record<string, string> = { academic: "#1e40af", modern: "#7c3aed", professional: "#334155", elegant: "#b45309", minimal: "#059669", latex: "#1a1a1a" };
+  const tc = TC[template] || "#1e40af";
   const fontMap: Record<string, string> = { default: "inherit", songti: "'SimSun', serif", kaiti: "'KaiTi', serif", heiti: "'SimHei', sans-serif", fangsong: "'FangSong', serif" };
   const ff = fontMap[layout.fontFamily] || "inherit";
-
-  const dividerClass = layout.dividerStyle === "line" ? "border-b-2" :
-    layout.dividerStyle === "double-line" ? "border-b-[3px] border-double" :
-    layout.dividerStyle === "dotted" ? "border-b-2 border-dotted" : "";
-
-  const alignClass = layout.basicInfoAlign === "left" ? "text-left" : layout.basicInfoAlign === "right" ? "text-right" : "text-center";
-
   const visibleModules = [...modules].filter((m) => m.visible).sort((a, b) => a.order - b.order);
 
-  const renderModule = (key: string) => {
+  const renderBasicInfo = () => {
+    const items = [
+      resume.basic.gender, resume.basic.birth_date && `${resume.basic.birth_date}`,
+      resume.basic.phone, resume.basic.email, resume.basic.hometown,
+      resume.basic.political_status, resume.basic.github,
+    ].filter(Boolean);
+    return items;
+  };
+
+  const renderBold = (text: string) => {
+    if (!text.includes("**")) return text;
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) =>
+      part.startsWith("**") && part.endsWith("**")
+        ? <strong key={i}>{part.slice(2, -2)}</strong>
+        : part
+    );
+  };
+
+  const renderModuleContent = (key: string) => {
     switch (key) {
-      case "education": return resume.education.length > 0 && (
-        <PSection title="教育经历" tc={tc} dividerClass={dividerClass} template={template} fs={layout.sectionFontSize} gap={layout.itemGap}>
-          {resume.education.map((e) => (
-            <div key={e.id} style={{ marginBottom: layout.itemGap }}>
-              <div className="flex justify-between"><span className="font-bold">{e.school}{e.department && ` · ${e.department}`}</span><span className="text-muted-foreground">{e.start_date} — {e.end_date}</span></div>
-              <div className="flex flex-wrap gap-x-4 text-muted-foreground mt-0.5">{e.major && <span>{e.major}</span>}{e.degree && <span>{e.degree}</span>}{e.gpa && <span>GPA: {e.gpa}/{e.gpa_max}</span>}{e.rank && <span>排名: {e.rank}{e.total_students && `/${e.total_students}`}</span>}</div>
-              {e.courses && <p className="text-muted-foreground mt-1">核心课程：{e.courses}</p>}
-              {e.thesis_title && <p className="text-muted-foreground mt-0.5">毕业论文：{e.thesis_title}</p>}
-            </div>
-          ))}
-        </PSection>
-      );
-      case "research": return resume.research.length > 0 && (
-        <PSection title="科研经历" tc={tc} dividerClass={dividerClass} template={template} fs={layout.sectionFontSize} gap={layout.itemGap}>
-          {resume.research.map((r) => (
-            <div key={r.id} style={{ marginBottom: layout.itemGap }}>
-              <div className="flex justify-between"><span className="font-bold">{r.title}</span><span className="text-muted-foreground">{r.start_date} — {r.end_date}</span></div>
-              <div className="flex flex-wrap gap-x-3 text-muted-foreground mt-0.5">{r.role && <span>{r.role}</span>}{r.advisor && <span>指导老师：{r.advisor}</span>}{r.lab && <span>{r.lab}</span>}{r.project_type && <span>[{r.project_type}]</span>}</div>
-              {r.description && <p className="mt-1">{r.description}</p>}
-              {r.contribution && <p className="mt-0.5" style={{ color: tc }}>个人贡献：{r.contribution}</p>}
-              {r.technologies && <p className="text-muted-foreground mt-0.5">技术栈：{r.technologies}</p>}
-            </div>
-          ))}
-        </PSection>
-      );
-      case "publications": return resume.publications.length > 0 && (
-        <PSection title="论文 / 专利" tc={tc} dividerClass={dividerClass} template={template} fs={layout.sectionFontSize} gap={layout.itemGap}>
-          {resume.publications.map((p, i) => (
-            <div key={p.id} style={{ marginBottom: layout.itemGap }}>
-              <span className="text-muted-foreground">[{i + 1}] </span><span className="font-medium">{p.title}</span>
-              {p.all_authors && <span className="text-muted-foreground"> · {p.all_authors}</span>}
-              {p.venue && <span className="text-muted-foreground"> · {p.venue}</span>}
-              {p.date && <span className="text-muted-foreground"> · {p.date}</span>}
-              {(p.sci_zone || p.ccf_rank || p.impact_factor) && (
-                <span className="text-muted-foreground"> ({[p.sci_zone && `SCI ${p.sci_zone}`, p.ccf_rank && `CCF-${p.ccf_rank}`, p.impact_factor && `IF: ${p.impact_factor}`].filter(Boolean).join(", ")})</span>
-              )}
-              {p.status && p.status !== "已发表" && <Badge variant="outline" className="ml-2 text-xs">{p.status}</Badge>}
-            </div>
-          ))}
-        </PSection>
-      );
-      case "awards": return resume.awards.length > 0 && (
-        <PSection title="获奖经历" tc={tc} dividerClass={dividerClass} template={template} fs={layout.sectionFontSize} gap={layout.itemGap}>
-          {resume.awards.map((a) => (
-            <div key={a.id} className="flex justify-between" style={{ marginBottom: layout.itemGap }}>
-              <span><span className="font-medium">{a.name}</span>{a.rank && ` · ${a.rank}`}{a.issuer && <span className="text-muted-foreground"> · {a.issuer}</span>}</span>
-              <span className="text-muted-foreground shrink-0 ml-4"><Badge variant="secondary" className="text-xs px-1.5 py-0 mr-2">{a.level}</Badge>{a.date}</span>
-            </div>
-          ))}
-        </PSection>
-      );
-      case "experiences": return resume.experiences.length > 0 && (
-        <PSection title="实习 / 项目经历" tc={tc} dividerClass={dividerClass} template={template} fs={layout.sectionFontSize} gap={layout.itemGap}>
-          {resume.experiences.map((e) => (
-            <div key={e.id} style={{ marginBottom: layout.itemGap }}>
-              <div className="flex justify-between"><span className="font-bold">{e.organization}{e.position && ` · ${e.position}`}</span><span className="text-muted-foreground">{e.start_date} — {e.end_date}</span></div>
-              {e.description && <p className="mt-1">{e.description}</p>}
-              {e.achievements && <p className="mt-0.5" style={{ color: tc }}>成果：{e.achievements}</p>}
-            </div>
-          ))}
-        </PSection>
-      );
+      case "education": return resume.education.length > 0 && resume.education.map((e) => (
+        <div key={e.id} className="mb-2.5">
+          <div className="flex justify-between items-baseline"><span className="font-bold text-gray-900">{e.school}{e.department && ` · ${e.department}`}</span><span className="text-gray-500 text-xs">{e.start_date} — {e.end_date}</span></div>
+          <div className="flex flex-wrap gap-x-4 text-gray-600 text-xs mt-0.5">{e.major && <span>{e.major}</span>}{e.degree && <span>{e.degree}</span>}{e.gpa && <span>GPA: {e.gpa}/{e.gpa_max}</span>}{e.rank && <span>排名: {e.rank}{e.total_students && `/${e.total_students}`}</span>}</div>
+          {e.courses && <p className="text-gray-500 text-xs mt-1">核心课程：{e.courses}</p>}
+          {e.thesis_title && <p className="text-gray-500 text-xs mt-0.5">毕业论文：{e.thesis_title}</p>}
+        </div>
+      ));
+      case "research": return resume.research.length > 0 && resume.research.map((r) => (
+        <div key={r.id} className="mb-2.5">
+          <div className="flex justify-between items-baseline"><span className="font-bold text-gray-900">{r.title}</span><span className="text-gray-500 text-xs">{r.start_date} — {r.end_date}</span></div>
+          <div className="flex flex-wrap gap-x-3 text-gray-600 text-xs mt-0.5">{r.role && <span>{r.role}</span>}{r.advisor && <span>导师：{r.advisor}</span>}{r.lab && <span>{r.lab}</span>}{r.project_type && <span className="font-medium" style={{color:tc}}>[{r.project_type}]</span>}</div>
+          {r.description && <p className="text-gray-700 text-xs mt-1 leading-relaxed">{renderBold(r.description)}</p>}
+          {r.contribution && <p className="text-xs mt-0.5 leading-relaxed" style={{color:tc}}>贡献：{renderBold(r.contribution)}</p>}
+          {r.technologies && <p className="text-gray-500 text-xs mt-0.5">技术栈：{r.technologies}</p>}
+        </div>
+      ));
+      case "publications": return resume.publications.length > 0 && resume.publications.map((p, i) => (
+        <div key={p.id} className="mb-1.5 text-xs leading-relaxed">
+          <span className="text-gray-400">[{i+1}] </span><span className="font-medium text-gray-900">{p.title}</span>
+          {p.all_authors && <span className="text-gray-600"> · {p.all_authors}</span>}
+          {p.venue && <span className="text-gray-600 italic"> · {p.venue}</span>}
+          {p.date && <span className="text-gray-500"> · {p.date}</span>}
+          {(p.sci_zone || p.ccf_rank || p.impact_factor) && <span className="font-medium" style={{color:tc}}> ({[p.sci_zone && `SCI ${p.sci_zone}`, p.ccf_rank && `CCF-${p.ccf_rank}`, p.impact_factor && `IF: ${p.impact_factor}`].filter(Boolean).join(", ")})</span>}
+          {p.status && p.status !== "已发表" && <span className="ml-1 text-[10px] border rounded px-1 py-0.5 text-gray-500">{p.status}</span>}
+        </div>
+      ));
+      case "awards": return resume.awards.length > 0 && resume.awards.map((a) => (
+        <div key={a.id} className="flex justify-between items-baseline mb-1.5 text-xs">
+          <span><span className="font-medium text-gray-900">{a.name}</span>{a.rank && <span className="font-medium" style={{color:tc}}> · {a.rank}</span>}{a.issuer && <span className="text-gray-500"> · {a.issuer}</span>}</span>
+          <span className="text-gray-500 shrink-0 ml-3"><span className="text-[10px] border rounded px-1 py-0.5 mr-1">{a.level}</span>{a.date}</span>
+        </div>
+      ));
+      case "experiences": return resume.experiences.length > 0 && resume.experiences.map((e) => (
+        <div key={e.id} className="mb-2.5">
+          <div className="flex justify-between items-baseline"><span className="font-bold text-gray-900">{e.organization}{e.position && ` · ${e.position}`}</span><span className="text-gray-500 text-xs">{e.start_date} — {e.end_date}</span></div>
+          {e.description && <p className="text-gray-700 text-xs mt-1 leading-relaxed">{renderBold(e.description)}</p>}
+          {e.achievements && <p className="text-xs mt-0.5 leading-relaxed" style={{color:tc}}>成果：{renderBold(e.achievements)}</p>}
+        </div>
+      ));
       case "skills": return resume.skills.length > 0 && (
-        <PSection title="技能特长" tc={tc} dividerClass={dividerClass} template={template} fs={layout.sectionFontSize} gap={layout.itemGap}>
-          {resume.skills.map((s) => (
-            <div key={s.id} style={{ marginBottom: Math.max(2, layout.itemGap - 4) }}>
-              {s.category && <span className="font-medium">{s.category}：</span>}<span>{s.content}</span>
-            </div>
-          ))}
-        </PSection>
+        <div className="text-xs space-y-0.5">{resume.skills.map((s) => <div key={s.id}>{s.category && <span className="font-medium text-gray-900">{s.category}：</span>}<span className="text-gray-700">{s.content}</span></div>)}</div>
       );
       case "languages": return resume.languages.length > 0 && (
-        <PSection title="语言能力" tc={tc} dividerClass={dividerClass} template={template} fs={layout.sectionFontSize} gap={layout.itemGap}>
-          <div className="flex flex-wrap gap-x-6 gap-y-1">
-            {resume.languages.map((l) => (
-              <span key={l.id}>{l.name}{l.test && ` (${l.test}`}{l.score && `: ${l.score}`}{l.test && ")"}{l.proficiency && ` — ${l.proficiency}`}</span>
-            ))}
-          </div>
-        </PSection>
+        <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-700">{resume.languages.map((l) => <span key={l.id}>{l.name}{l.test && ` (${l.test}`}{l.score && `: ${l.score}`}{l.test && ")"}{l.proficiency && ` — ${l.proficiency}`}</span>)}</div>
       );
-      case "self_evaluation": return resume.self_evaluation && (
-        <PSection title="自我评价" tc={tc} dividerClass={dividerClass} template={template} fs={layout.sectionFontSize} gap={layout.itemGap}>
-          <p className="leading-relaxed">{resume.self_evaluation}</p>
-        </PSection>
-      );
+      case "self_evaluation": return resume.self_evaluation && <p className="text-xs text-gray-700 leading-relaxed">{renderBold(resume.self_evaluation)}</p>;
       default: return null;
     }
   };
 
-  return (
-    <div style={{ fontFamily: ff, fontSize: layout.fontSize, lineHeight: layout.lineHeight, color: "#1a1a1a" }} className="max-w-[720px] mx-auto">
-      {/* 头部 */}
-      <div className={cn("mb-4", alignClass)} style={{ marginBottom: layout.sectionGap }}>
-        <div className="flex items-start gap-4">
-          <div className="flex-1">
-            <h1 className="font-bold" style={{ fontSize: layout.nameFontSize, color: tc }}>{resume.basic.name || "姓名"}</h1>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-muted-foreground" style={{ fontSize: layout.fontSize - 1, justifyContent: layout.basicInfoAlign === "center" ? "center" : layout.basicInfoAlign === "right" ? "flex-end" : "flex-start" }}>
-              {layout.basicInfoStyle !== "hidden" && (<>
-                {resume.basic.gender && <span>{layout.basicInfoStyle === "icon" ? "👤 " : "性别："}{resume.basic.gender}</span>}
-                {resume.basic.birth_date && <span>{layout.basicInfoStyle === "icon" ? "📅 " : "出生："}{resume.basic.birth_date}</span>}
-                {resume.basic.phone && <span>{layout.basicInfoStyle === "icon" ? "📱 " : "电话："}{resume.basic.phone}</span>}
-                {resume.basic.email && <span>{layout.basicInfoStyle === "icon" ? "✉️ " : "邮箱："}{resume.basic.email}</span>}
-                {resume.basic.hometown && <span>{layout.basicInfoStyle === "icon" ? "📍 " : "籍贯："}{resume.basic.hometown}</span>}
-                {resume.basic.political_status && <span>{layout.basicInfoStyle === "icon" ? "🏛️ " : "政治面貌："}{resume.basic.political_status}</span>}
-                {resume.basic.github && <span>{layout.basicInfoStyle === "icon" ? "💻 " : "GitHub："}{resume.basic.github}</span>}
-              </>)}
-            </div>
-            {(resume.basic.target_school || resume.basic.target_major) && (
-              <p className="mt-1 text-muted-foreground" style={{ fontSize: layout.fontSize - 1 }}>目标：{resume.basic.target_school} {resume.basic.target_major}</p>
-            )}
+  const sectionTitles: Record<string, string> = { education: "教育经历", research: "科研经历", publications: "论文 / 专利", awards: "获奖经历", experiences: "实习 / 项目经历", skills: "技能特长", languages: "语言能力", self_evaluation: "自我评价" };
+
+  /* ========== 学术经典模板 ========== */
+  if (template === "academic") {
+    return (
+      <div style={{ fontFamily: ff, fontSize: 12.5, lineHeight: 1.6, color: "#1a1a1a" }} className="max-w-[720px] mx-auto">
+        {/* 姓名居中 */}
+        <div className="text-center mb-4">
+          <h1 className="text-2xl font-bold tracking-wide mb-2" style={{ color: tc }}>{resume.basic.name}</h1>
+          <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-gray-600">
+            {renderBasicInfo().map((item, i) => <span key={i}>{item}</span>)}
           </div>
-          {layout.showPhoto && resume.basic.photo_url && (
-            <img src={resume.basic.photo_url} alt="照片" className="w-24 h-32 object-cover rounded-lg border shrink-0" />
+          {(resume.basic.target_school || resume.basic.target_major) && (
+            <p className="text-xs text-gray-500 mt-1.5">目标院校：{resume.basic.target_school} · {resume.basic.target_major}</p>
+          )}
+          <div className="mt-3 h-px" style={{ background: `linear-gradient(90deg, transparent 5%, ${tc} 50%, transparent 95%)` }} />
+        </div>
+        {visibleModules.map((mod) => {
+          const content = renderModuleContent(mod.key);
+          if (!content) return null;
+          return (
+            <div key={mod.key} className="mb-3.5">
+              <h2 className="text-[13px] font-bold mb-2 pb-1" style={{ color: tc, borderBottom: `1px solid ${tc}30` }}>{sectionTitles[mod.key] || mod.key}</h2>
+              {content}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  /* ========== 优雅学院模板 ========== */
+  if (template === "elegant") {
+    return (
+      <div style={{ fontFamily: "'Georgia', 'STSong', 'SimSun', serif", fontSize: 12.5, lineHeight: 1.7, color: "#292524" }} className="max-w-[720px] mx-auto">
+        {/* 名字 + 装饰线 */}
+        <div className="text-center mb-4">
+          <div className="flex items-center justify-center gap-4 mb-3">
+            <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, transparent, ${tc})` }} />
+            <h1 className="text-2xl tracking-[0.15em] shrink-0" style={{ color: tc, fontWeight: 600 }}>{resume.basic.name}</h1>
+            <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, ${tc}, transparent)` }} />
+          </div>
+          <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 text-xs text-stone-500">
+            {renderBasicInfo().map((item, i) => (
+              <span key={i} className="flex items-center gap-1">{i > 0 && <span style={{ color: tc, fontSize: 8 }}>◆</span>}{item}</span>
+            ))}
+          </div>
+          {(resume.basic.target_school || resume.basic.target_major) && (
+            <p className="text-xs text-stone-400 mt-1.5 italic tracking-wide">申请方向：{resume.basic.target_school} · {resume.basic.target_major}</p>
           )}
         </div>
+        {visibleModules.map((mod) => {
+          const content = renderModuleContent(mod.key);
+          if (!content) return null;
+          return (
+            <div key={mod.key} className="mb-4">
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className="w-1.5 h-1.5 rotate-45" style={{ backgroundColor: tc }} />
+                <h2 className="text-[13px] font-semibold tracking-wider" style={{ color: tc }}>{sectionTitles[mod.key]}</h2>
+                <div className="flex-1 border-b border-dotted" style={{ borderColor: `${tc}40` }} />
+              </div>
+              <div className="pl-1">{content}</div>
+            </div>
+          );
+        })}
       </div>
+    );
+  }
 
-      {/* 模块内容 */}
-      {visibleModules.map((mod) => (
-        <div key={mod.key} style={{ marginBottom: layout.sectionGap }}>
-          {renderModule(mod.key)}
+  /* ========== 极简线条模板 ========== */
+  if (template === "minimal") {
+    return (
+      <div style={{ fontFamily: ff, fontSize: 12, lineHeight: 1.6, color: "#1a1a1a" }} className="max-w-[720px] mx-auto">
+        <div className="mb-4">
+          <h1 className="text-xl font-bold mb-1">{resume.basic.name}</h1>
+          <div className="flex flex-wrap gap-x-3 text-xs text-gray-500">{renderBasicInfo().map((item, i) => <span key={i}>{item}</span>)}</div>
+          {(resume.basic.target_school || resume.basic.target_major) && <p className="text-xs text-gray-400 mt-1">{resume.basic.target_school} · {resume.basic.target_major}</p>}
         </div>
-      ))}
-    </div>
-  );
-}
+        {visibleModules.map((mod) => {
+          const content = renderModuleContent(mod.key);
+          if (!content) return null;
+          return (
+            <div key={mod.key} className="mb-3">
+              <h2 className="text-xs font-bold mb-1.5 pb-0.5 border-b border-gray-200">{sectionTitles[mod.key]}</h2>
+              {content}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
-/** 预览区块标题 */
-function PSection({ title, tc, dividerClass, template, fs, gap, children }: {
-  title: string; tc: string; dividerClass: string; template: ResumeTemplate; fs: number; gap: number; children: React.ReactNode;
-}) {
+  /* ========== LaTeX 学术模板 ========== */
+  if (template === "latex") {
+    return (
+      <div style={{ fontFamily: "'Georgia', 'CMU Serif', 'Times New Roman', serif", fontSize: 12.5, lineHeight: 1.65, color: "#000" }} className="max-w-[720px] mx-auto">
+        <div className="text-center mb-4">
+          <h1 className="text-xl mb-1" style={{ fontFamily: "'Georgia', serif", fontWeight: 400, letterSpacing: "0.05em" }}>{resume.basic.name}</h1>
+          <div className="flex flex-wrap justify-center gap-x-2 text-xs text-gray-700" style={{ fontFamily: "'Georgia', serif" }}>
+            {renderBasicInfo().map((item, i) => <span key={i}>{i > 0 && " · "}{item}</span>)}
+          </div>
+          {(resume.basic.target_school || resume.basic.target_major) && (
+            <p className="text-xs text-gray-500 mt-1 italic">Applying to: {resume.basic.target_school} — {resume.basic.target_major}</p>
+          )}
+          <div className="mt-2 border-t border-black" />
+        </div>
+        {visibleModules.map((mod) => {
+          const content = renderModuleContent(mod.key);
+          if (!content) return null;
+          return (
+            <div key={mod.key} className="mb-3">
+              <h2 className="text-[13px] font-normal uppercase tracking-[0.15em] mb-1.5 pb-0.5 border-b border-black" style={{ fontFamily: "'Georgia', serif" }}>{sectionTitles[mod.key]}</h2>
+              {content}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  /* ========== 现代创意模板 ========== */
   if (template === "modern") {
     return (
-      <div className="relative pl-4">
-        <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full" style={{ backgroundColor: tc }} />
-        <div className="flex items-center gap-2 mb-2">
-          <div className="px-3 py-1 rounded-md text-white font-bold" style={{ backgroundColor: tc, fontSize: fs }}>{title}</div>
+      <div style={{ fontFamily: ff, fontSize: 12.5, lineHeight: 1.6, color: "#1a1a1a" }} className="max-w-[720px] mx-auto flex gap-5">
+        <div className="w-[200px] shrink-0 rounded-xl p-4 text-white" style={{ background: `linear-gradient(180deg, ${tc} 0%, ${tc}cc 100%)` }}>
+          <h1 className="text-lg font-bold mb-3">{resume.basic.name}</h1>
+          <div className="space-y-1.5 text-xs opacity-90">
+            {resume.basic.phone && <p>📱 {resume.basic.phone}</p>}
+            {resume.basic.email && <p>✉️ {resume.basic.email}</p>}
+            {resume.basic.hometown && <p>📍 {resume.basic.hometown}</p>}
+            {resume.basic.political_status && <p>🏛️ {resume.basic.political_status}</p>}
+            {resume.basic.github && <p>💻 GitHub</p>}
+          </div>
+          {(resume.basic.target_school || resume.basic.target_major) && (
+            <div className="mt-4 pt-3 border-t border-white/20">
+              <p className="text-[10px] uppercase tracking-wider opacity-70 mb-1">目标院校</p>
+              <p className="text-xs font-medium">{resume.basic.target_school}</p>
+              <p className="text-xs opacity-80">{resume.basic.target_major}</p>
+            </div>
+          )}
+          {resume.skills.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-white/20">
+              <p className="text-[10px] uppercase tracking-wider opacity-70 mb-2">技能</p>
+              {resume.skills.map((s) => (
+                <div key={s.id} className="mb-1.5">
+                  <p className="text-xs font-medium">{s.content}</p>
+                  <div className="flex gap-0.5 mt-0.5">{Array.from({length: 5}, (_, i) => <div key={i} className="h-1 flex-1 rounded-full" style={{ backgroundColor: i < s.proficiency ? "rgba(255,255,255,.8)" : "rgba(255,255,255,.2)" }} />)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {resume.languages.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-white/20">
+              <p className="text-[10px] uppercase tracking-wider opacity-70 mb-1">语言</p>
+              {resume.languages.map((l) => <p key={l.id} className="text-xs">{l.name} {l.test && `${l.test} ${l.score}`}</p>)}
+            </div>
+          )}
         </div>
-        {children}
+        <div className="flex-1 min-w-0">
+          {visibleModules.filter(m => m.key !== "skills" && m.key !== "languages").map((mod) => {
+            const content = renderModuleContent(mod.key);
+            if (!content) return null;
+            return (
+              <div key={mod.key} className="mb-4 relative pl-3">
+                <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ backgroundColor: tc }} />
+                <div className="inline-block px-2 py-0.5 rounded text-white text-xs font-bold mb-2" style={{ backgroundColor: tc }}>{sectionTitles[mod.key] || mod.key}</div>
+                {content}
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }
-  if (template === "concise") {
-    return (
-      <div>
-        <h2 className="font-bold pb-1.5 mb-2 border-b" style={{ fontSize: fs, color: tc, borderColor: tc + "20" }}>{title}</h2>
-        {children}
-      </div>
-    );
-  }
+
+  /* ========== 专业商务模板 ========== */
   return (
-    <div>
-      <h2 className={cn("font-bold pb-1 mb-2", dividerClass)} style={{ fontSize: fs, color: tc, borderColor: tc + "40" }}>{title}</h2>
-      {children}
+    <div style={{ fontFamily: ff, fontSize: 12, lineHeight: 1.55, color: "#1a1a1a" }} className="max-w-[720px] mx-auto">
+      {/* 深色头部 */}
+      <div className="rounded-lg px-5 py-4 mb-4 text-white" style={{ background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)" }}>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-xl font-bold tracking-wide mb-1">{resume.basic.name}</h1>
+            {(resume.basic.target_school || resume.basic.target_major) && (
+              <p className="text-xs opacity-80 mb-2">申请：{resume.basic.target_school} · {resume.basic.target_major}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs opacity-80 mt-1">
+          {resume.basic.phone && <span>📱 {resume.basic.phone}</span>}
+          {resume.basic.email && <span>✉️ {resume.basic.email}</span>}
+          {resume.basic.hometown && <span>📍 {resume.basic.hometown}</span>}
+          {resume.basic.political_status && <span>{resume.basic.political_status}</span>}
+          {resume.basic.github && <span>GitHub: {resume.basic.github}</span>}
+        </div>
+      </div>
+      {/* 内容区 — 高密度紧凑排版 */}
+      {visibleModules.map((mod) => {
+        const content = renderModuleContent(mod.key);
+        if (!content) return null;
+        return (
+          <div key={mod.key} className="mb-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="h-5 w-1 rounded-full" style={{ backgroundColor: tc }} />
+              <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: tc }}>{sectionTitles[mod.key] || mod.key}</h2>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+            {content}
+          </div>
+        );
+      })}
     </div>
   );
 }

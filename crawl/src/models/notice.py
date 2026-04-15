@@ -42,6 +42,9 @@ class AdmissionNotice(Base):
     contact: Mapped[Optional[str]] = mapped_column(Text, nullable=True, comment="联系方式")
     summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True, comment="摘要")
     raw_content: Mapped[Optional[str]] = mapped_column(Text, nullable=True, comment="原始正文")
+    images: Mapped[Optional[list]] = mapped_column(
+        JSON, nullable=True, comment="图片列表 [{url, alt, width, height}]"
+    )
     raw_html_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True, comment="原始 HTML 快照文件路径")
     llm_model: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, comment="使用的 LLM 模型名称")
     llm_confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True, comment="LLM 提取置信度")

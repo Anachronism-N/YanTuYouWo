@@ -42,16 +42,16 @@ const recentAchievements = [
 ];
 
 const statusConfig = {
-  todo: { label: "待办", color: "bg-gray-100 text-gray-700" },
-  in_progress: { label: "进行中", color: "bg-blue-100 text-blue-700" },
-  done: { label: "已完成", color: "bg-green-100 text-green-700" },
-  overdue: { label: "已逾期", color: "bg-red-100 text-red-700" },
+  todo: { label: "待办", color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
+  in_progress: { label: "进行中", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  done: { label: "已完成", color: "bg-green-100 text-green-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  overdue: { label: "已逾期", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
 };
 
 const priorityConfig = {
-  high: { label: "高", color: "text-red-500" },
-  medium: { label: "中", color: "text-amber-500" },
-  low: { label: "低", color: "text-gray-400" },
+  high: { label: "高", color: "text-red-500 dark:text-red-400" },
+  medium: { label: "中", color: "text-amber-500 dark:text-amber-400" },
+  low: { label: "低", color: "text-gray-400 dark:text-gray-500" },
 };
 
 /* ================================================================
@@ -61,12 +61,25 @@ const priorityConfig = {
 export default function ProgressPage() {
   return (
     <div className="space-y-6">
+      {/* 页面标题 */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <Target className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">进度中心</h1>
+            <p className="text-sm text-muted-foreground">规划管理、任务追踪、成果记录</p>
+          </div>
+        </div>
+      </div>
+
       {/* 统计概览 */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "总体完成率", value: `${stats.completion_rate}%`, icon: Target, color: "text-emerald-500 bg-emerald-50", sub: `${stats.completed_tasks}/${stats.total_tasks} 任务` },
           { label: "本周完成", value: `${stats.weekly_completed} 项`, icon: CheckSquare, color: "text-blue-500 bg-blue-50", sub: "继续保持！" },
-          { label: "连续打卡", value: `${stats.streak_days} 天`, icon: Flame, color: "text-orange-500 bg-orange-50", sub: "🔥 状态很好" },
+          { label: "连续打卡", value: `${stats.streak_days} 天`, icon: Flame, color: "text-orange-500 bg-orange-50", sub: "状态很好" },
           { label: "成果记录", value: `${stats.total_achievements} 项`, icon: Trophy, color: "text-amber-500 bg-amber-50", sub: "持续积累中" },
         ].map((stat, i) => (
           <motion.div key={stat.label}
@@ -88,6 +101,46 @@ export default function ProgressPage() {
             </Card>
           </motion.div>
         ))}
+      </div>
+
+      {/* 完成进度环形图 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="shadow-sm">
+          <CardContent className="p-5 flex items-center gap-5">
+            <div className="relative h-20 w-20 shrink-0">
+              <svg viewBox="0 0 36 36" className="h-20 w-20 -rotate-90">
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted/30" />
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="97.4" strokeDashoffset={97.4 * (1 - 0.42)} className="text-primary transition-all duration-1000" />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg font-bold">42%</span>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-semibold">总体进度</h3>
+              <p className="text-sm text-muted-foreground mt-1">已完成 5/12 个阶段任务</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">比上周提升 8%</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm">
+          <CardContent className="p-5 flex items-center gap-5">
+            <div className="relative h-20 w-20 shrink-0">
+              <svg viewBox="0 0 36 36" className="h-20 w-20 -rotate-90">
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted/30" />
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="97.4" strokeDashoffset={97.4 * (1 - 0.75)} className="text-amber-500 transition-all duration-1000" />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg font-bold">75%</span>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-semibold">材料准备</h3>
+              <p className="text-sm text-muted-foreground mt-1">简历、推荐信、个人陈述</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">还需完善个人陈述</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* 进度条 */}

@@ -119,8 +119,13 @@ export default function UserProfilePage() {
       {/* 页面标题 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">个人资料</h1>
-          <p className="text-sm text-muted-foreground mt-1">管理你的个人信息</p>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <User className="h-5 w-5" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">个人资料</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">管理你的个人信息</p>
         </div>
         {!isEditing ? (
           <Button variant="outline" className="gap-1.5" onClick={() => setIsEditing(true)}>

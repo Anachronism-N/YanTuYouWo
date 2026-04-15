@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
-from typing import Optional, List, Dict
 from pydantic import BaseModel
 
 
@@ -36,6 +34,14 @@ class NoticeItem(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class NoticeImage(BaseModel):
+    """通知中的图片"""
+    url: str
+    alt: str = ""
+    width: int | None = None
+    height: int | None = None
+
+
 class NoticeDetail(NoticeItem):
     """通知详情 — 对齐前端 NoticeDetail"""
     requirements: str | None = None
@@ -44,6 +50,7 @@ class NoticeDetail(NoticeItem):
     contact: str | None = None
     raw_content: str = ""
     source_url: str = ""
+    images: list[NoticeImage] = []
     created_at: str = ""
     prev_year_quota: str | None = None
 

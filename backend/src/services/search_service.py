@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, union_all, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.notice import AdmissionNotice
-from src.models.university import University, Department
+from src.models.university import University
 
 
 async def search(
@@ -17,62 +17,64 @@ async def search(
     page: int = 1,
     size: int = 20,
 ) -> dict:
-    """全站搜索 — 跨通知、院校搜索"""
+    """全站搜索 — DB 级分页，不再全量加载"""
 
-    items = []
-    total = 0
+    subqueries = []
 
     if not type or type == "notice":
-        # 搜索通知
-        notice_query = (
-            select(AdmissionNotice, University)
-            .join(University, AdmissionNotice.university_id == University.id)
-            .where(
-                or_(
-                    AdmissionNotice.title.contains(keyword),
-                    AdmissionNotice.summary.contains(keyword),
-                )
+        notice_q = (
+            select(
+                AdmissionNotice.id.label("id"),
+                literal("notice").label("type"),
+                AdmissionNotice.title.label("title"),
+                func.coalesce(AdmissionNotice.summary, "").label("description"),
             )
-            .order_by(AdmissionNotice.id.desc())
-            .limit(size)
+            .join(University, AdmissionNotice.university_id == University.id)
+            .where(or_(
+                AdmissionNotice.title.contains(keyword),
+                AdmissionNotice.summary.contains(keyword),
+            ))
         )
-        notice_result = await db.execute(notice_query)
-        for notice, uni in notice_result.all():
-            items.append({
-                "id": notice.id,
-                "type": "notice",
-                "title": notice.title,
-                "description": notice.summary or f"{uni.name} - {notice.program_type or '通知'}",
-                "url": f"/info/notices/{notice.id}",
-            })
+        subqueries.append(notice_q)
 
     if not type or type == "school":
-        # 搜索院校
-        school_query = (
-            select(University)
-            .where(
-                or_(
-                    University.name.contains(keyword),
-                    University.short_name.contains(keyword),
-                    University.province.contains(keyword),
-                )
+        school_q = (
+            select(
+                University.id.label("id"),
+                literal("school").label("type"),
+                University.name.label("title"),
+                (University.level + " · " + University.province).label("description"),
             )
-            .order_by(University.name)
-            .limit(size)
+            .where(or_(
+                University.name.contains(keyword),
+                University.short_name.contains(keyword),
+                University.province.contains(keyword),
+            ))
         )
-        school_result = await db.execute(school_query)
-        for uni in school_result.scalars().all():
-            items.append({
-                "id": uni.id,
-                "type": "school",
-                "title": uni.name,
-                "description": f"{uni.level} · {uni.province}{(' · ' + uni.city) if uni.city else ''}",
-                "url": f"/info/schools/{uni.id}",
-            })
+        subqueries.append(school_q)
 
-    total = len(items)
+    if not subqueries:
+        return {"total": 0, "items": []}
 
-    return {
-        "total": total,
-        "items": items,
-    }
+    combined = union_all(*subqueries).subquery()
+
+    total_r = await db.execute(select(func.count()).select_from(combined))
+    total = total_r.scalar() or 0
+
+    offset = (page - 1) * size
+    rows = await db.execute(
+        select(combined).offset(offset).limit(size)
+    )
+
+    items = []
+    for row in rows.all():
+        url_map = {"notice": f"/info/notices/{row.id}", "school": f"/info/schools/{row.id}"}
+        items.append({
+            "id": row.id,
+            "type": row.type,
+            "title": row.title,
+            "description": row.description,
+            "url": url_map.get(row.type, "#"),
+        })
+
+    return {"total": total, "items": items}

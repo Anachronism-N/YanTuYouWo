@@ -14,81 +14,29 @@ interface MindNode {
   children?: MindNode[];
 }
 
-// 左侧分支数据
+// 左侧分支
 const LEFT_BRANCHES: MindNode[] = [
   {
-    label: "保研信息",
-    emoji: "📢",
+    label: "信息",
+    emoji: "📋",
     children: [
-      { label: "夏令营 | 预推免信息" },
-      { label: "院校信息" },
-      { label: "招聘信息" },
+      { label: "信息聚合" },
+      { label: "院校库" },
+      { label: "导师库" },
+      { label: "竞赛信息" },
+      { label: "期刊会议" },
     ],
   },
   {
-    label: "导师信息",
-    emoji: "👨‍🏫",
-    children: [
-      { label: "导师画像" },
-      { label: "评价与反馈" },
-    ],
-  },
-  {
-    label: "知识库",
+    label: "知识",
     emoji: "📚",
     children: [
-      { label: "基础信息" },
-      { label: "各校情况" },
-      { label: "录播课程" },
+      { label: "院校百科" },
       { label: "面试题库" },
       { label: "文书模板" },
-      { label: "经验 & 信息差" },
-    ],
-  },
-];
-
-// 右侧分支数据
-const RIGHT_BRANCHES: MindNode[] = [
-  {
-    label: "AI 辅导",
-    emoji: "🤖",
-    children: [
-      { label: "规划与建议" },
-      { label: "简历制作" },
-      { label: "择校择导" },
-      {
-        label: "模拟面试",
-        children: [
-          { label: "RAG 面试教练" },
-          { label: "虚拟数字面试官" },
-          { label: "ASR+TTS 实时交互" },
-        ],
-      },
-      {
-        label: "心理疏导",
-        children: [
-          { label: "心理学 Multi-Agent" },
-          { label: "共情对话" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "社群",
-    emoji: "👥",
-    children: [
-      { label: "经验分享 & 发帖" },
-      { label: "问答互助" },
-      { label: "学习打卡" },
-    ],
-  },
-  {
-    label: "进度中心",
-    emoji: "🎯",
-    children: [
-      { label: "规划管理" },
-      { label: "任务追踪" },
-      { label: "成果记录" },
+      { label: "经验精选" },
+      { label: "录播课程" },
+      { label: "信息差速递" },
     ],
   },
   {
@@ -99,7 +47,55 @@ const RIGHT_BRANCHES: MindNode[] = [
       { label: "FastAPI + PostgreSQL" },
       { label: "LLM + 向量数据库" },
       { label: "多源爬虫 + Celery" },
-      { label: "加密 + 隐私保护" },
+    ],
+  },
+];
+
+// 右侧分支
+const RIGHT_BRANCHES: MindNode[] = [
+  {
+    label: "辅导",
+    emoji: "🤖",
+    children: [
+      { label: "综合规划" },
+      { label: "简历工坊" },
+      { label: "择校推荐" },
+      { label: "导师推荐" },
+      {
+        label: "模拟面试",
+        children: [
+          { label: "RAG 面试教练" },
+          { label: "数字人面试官" },
+          { label: "ASR + TTS 交互" },
+        ],
+      },
+      {
+        label: "心理支持",
+        children: [
+          { label: "Multi-Agent" },
+          { label: "共情对话" },
+        ],
+      },
+    ],
+  },
+  {
+    label: "交流",
+    emoji: "💬",
+    children: [
+      { label: "经验分享" },
+      { label: "问答互助" },
+      { label: "资料广场" },
+      { label: "匿名树洞" },
+    ],
+  },
+  {
+    label: "督促",
+    emoji: "📅",
+    children: [
+      { label: "规划管理" },
+      { label: "任务追踪" },
+      { label: "成果记录" },
+      { label: "学习打卡" },
     ],
   },
 ];

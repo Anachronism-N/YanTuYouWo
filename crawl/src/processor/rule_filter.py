@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""规则过滤器 - 基于关键词权重的相关性评分"""
+"""规则过滤器 - 基于关键词权重的相关性评分和 program_type 推断"""
 
 import re
 from loguru import logger
@@ -25,11 +25,10 @@ def relevance_score(title: str) -> float:
     title_stripped = title.strip()
     title_len = len(title_stripped)
 
-    # 标题太短（<4字）大概率是导航链接
     if title_len < 4:
         return 0.0
 
-    # 导航/栏目类标题 — 这些是网站导航链接，不是通知（提前检测，避免后续加分）
+    # 导航/栏目类标题
     if re.search(
         r"^(学院领导|历任院长|组织机构|全职教授|名誉教授|特聘教授|荣休教授|兼职教授"
         r"|教授研究|教学网络|社会责任|学院新闻|学院概况|学院简介|师资队伍|科学研究"
@@ -51,12 +50,11 @@ def relevance_score(title: str) -> float:
     ):
         return 0.0
 
-    # 短标题惩罚（<8字的标题大概率是导航链接或栏目名，除非包含强关键词）
     has_strong_keyword = bool(re.search(
-        r"推免|推荐免试|夏令营|预推免|直博|硕博连读|优秀大学生|暑期学校", title
+        r"推免|推荐免试|夏令营|预推免|直博|硕博连读|优秀大学生|暑期学校|暑期营|秋令营|冬令营",
+        title,
     ))
     if title_len < 8 and not has_strong_keyword:
-        # 短标题如果只匹配弱关键词（如"招生"、"硕士"），直接丢弃
         return 0.0
 
     # 强相关关键词 (+1.0)
@@ -66,21 +64,23 @@ def relevance_score(title: str) -> float:
     # 中等相关 (+0.5)
     if re.search(
         r"接收.*研究生|招收.*研究生|优秀大学生|暑期学校|优才计划|拔尖计划|暑期夏令营"
-        r"|保研|免试攻读|选拔.*研究生|申请.*考核|申请考核制|博士.*招生|硕士.*招生"
-        r"|招生简章|招生目录|招生计划|复试.*名单|拟录取|录取.*名单",
+        r"|保研|免试攻读|选拔.*研究生|博士.*招生|硕士.*招生"
+        r"|招生简章|招生目录|招生计划|复试.*名单|拟录取|录取.*名单"
+        r"|入营名单|优营名单|候补名单|待录取"
+        r"|接收.*推免|外校.*推免|校外.*推免"
+        r"|暑期学术|学术夏令营|学术论坛.*招生",
         title,
     ):
         score += 0.5
 
-    # 弱相关 (+0.2) — 仅在标题足够长时才加分
+    # 弱相关 (+0.2)
     if re.search(r"招生|研究生|复试|面试|录取|调档|报到", title):
         score += 0.2
 
-    # 更弱相关 (+0.1) — 通知/公告类标题，可能包含招生信息
+    # 更弱相关 (+0.1)
     if re.search(r"通知|公告|公示|通告|简章|章程|办法|方案|安排|须知", title):
         score += 0.1
 
-    # 年份标识（通常招生通知会包含年份）(+0.1)
     if re.search(r"20\d{2}年|20\d{2}届", title):
         score += 0.1
 
@@ -93,7 +93,13 @@ def relevance_score(title: str) -> float:
         r"|课程表|选课|退课|补考|重修|毕业审核|离校手续"
         r"|申请考核制|申请.考核|博士.*考核|考核.*博士"
         r"|学业导师|工作细则|年度报告|授权点建设|第二学士学位"
-        r"|联合培养.*签约|签订.*协议|工程硕博士.*联合",
+        r"|联合培养.*签约|签订.*协议|工程硕博士.*联合"
+        r"|本科.*招生|高考|高招|艺考|体育特长|自主招生|保送生|强基计划|第二学士|高水平运动"
+        r"|定向就业.*合同签订|社会实践.*表彰|限选课|选课通知"
+        r"|初试成绩|成绩复核|复试分数线|复试基本分数线|考研调剂|统考调剂|一志愿复试|思政审核"
+        r"|全国硕士研究生招生考试|考点考生须知|网报公告|报考点|网上确认指南"
+        r"|硕士.*调剂方案|调剂工作办法|拟录取查询"
+        r"|保留入学资格.*返校|公费师范.*在职攻读",
         title,
     ):
         score -= 0.8
@@ -110,6 +116,50 @@ def relevance_score(title: str) -> float:
     result = max(score, 0.0)
     logger.debug(f"相关性评分: {result:.2f} | {title}")
     return result
+
+
+def infer_program_type(title: str, extracted_type: str | None = None) -> str:
+    """
+    从标题推断 program_type，用于纠正 LLM 分类结果。
+
+    当 LLM 返回"其他"或 None 时，尝试从标题关键词推断更准确的类型。
+
+    Args:
+        title: 通知标题
+        extracted_type: LLM 提取的 program_type
+
+    Returns:
+        修正后的 program_type
+    """
+    if extracted_type and extracted_type not in ("其他", "null", "None", ""):
+        return extracted_type
+
+    if re.search(r"夏令营|暑期学校|暑期营|暑期学术|秋令营|冬令营", title):
+        return "夏令营"
+    if re.search(r"拟录取|录取.*名单|待录取", title):
+        return "拟录取"
+    if re.search(r"入营|优营|候补.*名单|复试.*名单", title):
+        return "入营名单"
+    if re.search(r"推免|推荐免试|预推免|接收.*推免|免试攻读", title):
+        return "预推免"
+    if re.search(r"直博|直接攻博", title):
+        return "直博"
+    if re.search(r"硕博连读", title):
+        return "硕博连读"
+    if re.search(r"招生简章|招生目录|招生计划|招生办法|实施细则|实施办法|工作办法", title):
+        return "招生简章"
+    if re.search(r"宣讲|招生.*说明|报考指南|招生咨询", title):
+        return "招生宣讲"
+    if re.search(r"联合培养|联合招生", title):
+        return "招生简章"
+    if re.search(r"博士.*招生|招.*博士|攻读.*博士|硕士.*招生|招.*硕士|攻读.*硕士", title):
+        return "招生简章"
+    if re.search(r"研学营|学术营|学术论坛.*招生|暑期.*论坛", title):
+        return "夏令营"
+    if re.search(r"报名.*通知|预报名|报名.*系统", title):
+        return "预推免"
+
+    return extracted_type or "其他"
 
 
 def batch_filter(

@@ -34,7 +34,7 @@ import type { StatsOverview } from "@/types/api";
 import type { NoticeItem } from "@/types/notice";
 import type { SchoolItem } from "@/types/school";
 import { SITE_NAME } from "@/lib/constants";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 /** 动画变体 */
@@ -93,12 +93,13 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       {/* ========== Hero Section ========== */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 dark:from-blue-950/30 via-background to-cyan-50/30 dark:to-cyan-950/20">
+      <section className="relative overflow-hidden">
         {/* 背景装饰 */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute left-1/4 top-0 h-72 w-72 rounded-full bg-blue-400/10 dark:bg-blue-500/5 blur-3xl animate-float" />
-          <div className="absolute right-1/4 top-20 h-96 w-96 rounded-full bg-cyan-400/10 dark:bg-cyan-500/5 blur-3xl animate-float-delayed" />
-          <div className="absolute left-1/2 bottom-0 h-64 w-64 rounded-full bg-violet-400/5 dark:bg-violet-500/5 blur-3xl animate-float" />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 dark:from-blue-950/30 via-background to-cyan-50/40 dark:to-cyan-950/20" />
+          <div className="absolute left-[10%] top-[5%] h-80 w-80 rounded-full bg-blue-400/15 dark:bg-blue-500/8 blur-3xl" />
+          <div className="absolute right-[15%] top-[15%] h-96 w-96 rounded-full bg-cyan-400/12 dark:bg-cyan-500/6 blur-3xl" />
+          <div className="absolute left-[40%] bottom-0 h-72 w-72 rounded-full bg-violet-400/10 dark:bg-violet-500/6 blur-3xl" />
         </div>
 
         <div className="mx-auto max-w-7xl px-4 pb-16 pt-20 sm:px-6 sm:pb-24 sm:pt-28 lg:px-8">
@@ -109,7 +110,7 @@ export default function HomePage() {
             className="mx-auto max-w-3xl text-center"
           >
             <motion.div variants={fadeInUp}>
-              <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm backdrop-blur-sm">
+              <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm backdrop-blur-sm border-primary/30 bg-primary/5 shadow-sm shadow-primary/10">
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                 全国 {stats.school_count} 所高校信息已收录
               </Badge>
@@ -143,18 +144,24 @@ export default function HomePage() {
               className="mx-auto mt-8 flex max-w-xl gap-2"
             >
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="搜索学校、学院、关键词..."
-                  className="h-12 pl-10 text-base"
+                  className="h-12 pl-11 text-base rounded-full border-primary/20 bg-background/80 backdrop-blur-sm shadow-sm focus-visible:shadow-primary/10 focus-visible:ring-primary/30"
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
                 />
               </div>
-              <Button type="submit" size="lg" className="h-12 px-6 transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98]">
+              <Button type="submit" size="lg" className="h-12 px-7 rounded-full transition-all hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]">
                 搜索
               </Button>
             </motion.form>
+
+            <motion.div variants={fadeInUp} className="mt-4 flex items-center justify-center gap-6 text-xs text-muted-foreground/60">
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> 实时更新</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> 全国覆盖</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> 免费使用</span>
+            </motion.div>
 
             {/* 热门搜索 */}
             <motion.div
@@ -200,7 +207,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <div className="text-2xl font-bold tabular-nums">
-                        {stat.value}
+                        <CountUpNumber value={stat.value} />
                         <span className="ml-0.5 text-sm font-normal text-muted-foreground">
                           {stat.suffix}
                         </span>
@@ -237,28 +244,34 @@ export default function HomePage() {
                 description: "夏令营、预推免、宣讲会等招生信息一站式汇总",
                 icon: Calendar,
                 href: "/info/notices",
-                color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10",
+                color: "text-blue-600 dark:text-blue-400",
+                bg: "bg-blue-50 dark:bg-blue-500/10",
+                border: "hover:border-blue-300/50 dark:hover:border-blue-500/30",
               },
               {
                 title: "院校库",
                 description: "985/211/双一流院校信息，了解目标院校详情",
                 icon: Building2,
                 href: "/info/schools",
-                color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10",
+                color: "text-emerald-600 dark:text-emerald-400",
+                bg: "bg-emerald-50 dark:bg-emerald-500/10",
+                border: "hover:border-emerald-300/50 dark:hover:border-emerald-500/30",
               },
               {
                 title: "导师库",
                 description: "搜索全国高校导师，了解研究方向与招生情况",
                 icon: Users,
                 href: "/info/tutors",
-                color: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10",
+                color: "text-purple-600 dark:text-purple-400",
+                bg: "bg-purple-50 dark:bg-purple-500/10",
+                border: "hover:border-purple-300/50 dark:hover:border-purple-500/30",
               },
             ].map((item) => (
               <motion.div key={item.title} variants={fadeInUp}>
                 <Link href={item.href}>
-                  <Card className="group h-full transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-1">
+                  <Card className={`group h-full transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 ${item.border}`}>
                     <CardContent className="flex flex-col p-6">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${item.color}`}>
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${item.bg} ${item.color}`}>
                         <item.icon className="h-6 w-6" />
                       </div>
                       <h3 className="mt-4 text-lg font-semibold tracking-tight">{item.title}</h3>
@@ -286,6 +299,7 @@ export default function HomePage() {
                 href: "/ai/resume",
                 gradient: "from-violet-500/10 to-purple-500/10",
                 iconColor: "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10",
+                badgeColor: "border-violet-200 text-violet-700 dark:border-violet-500/30 dark:text-violet-400",
               },
               {
                 title: "AI 择校推荐",
@@ -294,6 +308,7 @@ export default function HomePage() {
                 href: "/ai/recommend",
                 gradient: "from-amber-500/10 to-orange-500/10",
                 iconColor: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10",
+                badgeColor: "border-amber-200 text-amber-700 dark:border-amber-500/30 dark:text-amber-400",
               },
               {
                 title: "AI 导师推荐",
@@ -302,6 +317,7 @@ export default function HomePage() {
                 href: "/ai/tutor-match",
                 gradient: "from-emerald-500/10 to-teal-500/10",
                 iconColor: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10",
+                badgeColor: "border-emerald-200 text-emerald-700 dark:border-emerald-500/30 dark:text-emerald-400",
               },
             ].map((item) => (
               <motion.div key={item.title} variants={fadeInUp}>
@@ -312,7 +328,7 @@ export default function HomePage() {
                         <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${item.iconColor}`}>
                           <item.icon className="h-6 w-6" />
                         </div>
-                        <Badge variant="outline" className="text-xs border-violet-200 text-violet-700 dark:border-violet-500/30 dark:text-violet-400">
+                        <Badge variant="outline" className={`text-xs ${item.badgeColor}`}>
                           <Sparkles className="h-3 w-3 mr-1" /> AI 驱动
                         </Badge>
                       </div>
@@ -331,51 +347,26 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* P3 新功能入口 */}
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4">
+          {/* 更多功能入口 */}
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              {
-                title: "模拟面试",
-                description: "AI 面试官实时提问与评价",
-                icon: Mic,
-                href: "/ai/interview",
-                gradient: "from-blue-500/10 to-cyan-500/10",
-                iconColor: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10",
-              },
-              {
-                title: "心理支持",
-                description: "保研路上的温暖陪伴",
-                icon: Heart,
-                href: "/ai/mental",
-                gradient: "from-pink-500/10 to-rose-500/10",
-                iconColor: "text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-500/10",
-              },
-              {
-                title: "综合规划",
-                description: "AI 定制保研时间线",
-                icon: Calendar,
-                href: "/ai/plan",
-                gradient: "from-amber-500/10 to-yellow-500/10",
-                iconColor: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10",
-              },
-              {
-                title: "保研社群",
-                description: "交流经验、互助答疑",
-                icon: MessageSquare,
-                href: "/community",
-                gradient: "from-orange-500/10 to-red-500/10",
-                iconColor: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10",
-              },
+              { title: "模拟面试", description: "AI 面试官实时提问与评价", icon: Mic, href: "/ai/interview", gradient: "from-blue-500/10 to-cyan-500/10", iconColor: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10" },
+              { title: "心理支持", description: "保研路上的温暖陪伴", icon: Heart, href: "/ai/mental", gradient: "from-pink-500/10 to-rose-500/10", iconColor: "text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-500/10" },
+              { title: "综合规划", description: "AI 定制保研时间线", icon: Calendar, href: "/ai/plan", gradient: "from-amber-500/10 to-yellow-500/10", iconColor: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10" },
+              { title: "保研社群", description: "交流经验、互助答疑", icon: MessageSquare, href: "/community", gradient: "from-orange-500/10 to-red-500/10", iconColor: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10" },
             ].map((item) => (
               <motion.div key={item.title} variants={fadeInUp}>
                 <Link href={item.href}>
                   <Card className={`group h-full transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-1 bg-gradient-to-br ${item.gradient}`}>
-                    <CardContent className="flex flex-col p-5">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${item.iconColor}`}>
-                        <item.icon className="h-5 w-5" />
+                    <CardContent className="flex flex-col p-6">
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${item.iconColor}`}>
+                        <item.icon className="h-6 w-6" />
                       </div>
-                      <h3 className="mt-3 text-base font-semibold tracking-tight">{item.title}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+                      <h3 className="mt-4 text-lg font-semibold tracking-tight">{item.title}</h3>
+                      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+                      <div className="mt-4 flex items-center text-sm font-medium text-primary opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-1">
+                        了解更多 <ArrowRight className="ml-1 h-4 w-4" />
+                      </div>
                     </CardContent>
                   </Card>
                 </Link>
@@ -518,14 +509,14 @@ export default function HomePage() {
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">用户好评</h2>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">来自真实用户的声音</p>
           </motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { name: "张同学", school: "某 985 高校", avatar: "🧑‍🎓", content: "研途有我帮我整理了所有夏令营信息，再也不用一个个翻学校官网了！", rating: 5 },
               { name: "李同学", school: "某 211 高校", avatar: "👩‍🎓", content: "AI 模拟面试功能太棒了，面试前练了好几轮，真正面试时自信了很多。", rating: 5 },
               { name: "王同学", school: "某双一流高校", avatar: "🧑‍💻", content: "综合规划功能帮我制定了详细的保研时间线，每一步都很清晰！", rating: 5 },
             ].map((t) => (
               <motion.div key={t.name} variants={fadeInUp}>
-                <Card className="h-full hover:shadow-md transition-shadow">
+                <Card className="h-full hover:shadow-lg hover:-translate-y-1 transition-all">
                   <CardContent className="p-5">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-violet-500/10 text-xl">
@@ -583,4 +574,33 @@ export default function HomePage() {
       </section>
     </div>
   );
+}
+
+function CountUpNumber({ value }: { value: number }) {
+  const [display, setDisplay] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !started.current) {
+        started.current = true;
+        const start = performance.now();
+        const dur = 1200;
+        const step = (now: number) => {
+          const p = Math.min((now - start) / dur, 1);
+          const eased = 1 - Math.pow(1 - p, 3);
+          setDisplay(Math.floor(eased * value));
+          if (p < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      }
+    }, { threshold: 0.3 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [value]);
+
+  return <span ref={ref}>{display.toLocaleString()}</span>;
 }

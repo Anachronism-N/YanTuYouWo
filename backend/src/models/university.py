@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional, List
-from sqlalchemy import String, Integer, Boolean, DateTime, Text, ForeignKey, JSON, UniqueConstraint
+from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, JSON, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
@@ -58,6 +58,10 @@ class Department(Base):
     # 关系
     university: Mapped["University"] = relationship(back_populates="departments")
     sources: Mapped[List["DepartmentSource"]] = relationship(back_populates="department", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("idx_dept_university", "university_id"),
+    )
 
     def __repr__(self) -> str:
         return f"<Department(id={self.id}, name='{self.name}')>"

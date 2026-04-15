@@ -140,9 +140,9 @@ const CATEGORIES: { id: PostCategory | "all"; label: string; icon: React.ReactNo
 ];
 
 const SORT_OPTIONS = [
-  { id: "hot", label: "热门", icon: <Flame className="h-3.5 w-3.5" /> },
-  { id: "latest", label: "最新", icon: <Clock className="h-3.5 w-3.5" /> },
-  { id: "featured", label: "精华", icon: <Star className="h-3.5 w-3.5" /> },
+  { id: "hot", label: "热门", icon: <Flame className="h-4 w-4" /> },
+  { id: "latest", label: "最新", icon: <Clock className="h-4 w-4" /> },
+  { id: "featured", label: "精华", icon: <Star className="h-4 w-4" /> },
 ];
 
 /* ================================================================
@@ -264,6 +264,19 @@ export default function CommunityPage() {
 
   return (
     <div>
+      {/* 页面标题 */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400">
+            <MessageSquare className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">保研社群</h1>
+            <p className="text-sm text-muted-foreground">交流经验、互助答疑、共同进步</p>
+          </div>
+        </div>
+      </div>
+
       {/* 搜索 + 分类 */}
       <div className="mb-5">
         <div className="relative mb-4">

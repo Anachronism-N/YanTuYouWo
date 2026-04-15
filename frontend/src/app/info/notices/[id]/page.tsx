@@ -31,6 +31,7 @@ import {
   ChevronRight,
   BookmarkPlus,
   Loader2,
+  BookOpen,
 } from "lucide-react";
 import { getNoticeDetail } from "@/lib/api";
 import type { NoticeDetail, NoticeStatus } from "@/types/notice";
@@ -142,7 +143,7 @@ export default function NoticeDetailPage() {
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 {/* 状态标签 */}
                 <Badge className={`${statusInfo.bg} ${statusInfo.text} border-0 px-3`}>
-                  <span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${statusInfo.dot} inline-block animate-pulse`} />
+                  <span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${statusInfo.dot} inline-block`} />
                   {statusInfo.label}
                 </Badge>
 
@@ -282,7 +283,7 @@ export default function NoticeDetailPage() {
 
                   <div className="flex items-start gap-3">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <GraduationCap className="h-4 w-4" />
+                      <BookOpen className="h-4 w-4" />
                     </div>
                     <div>
                       <div className="font-medium">学科方向</div>

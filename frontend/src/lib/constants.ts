@@ -19,8 +19,12 @@ export const NOTICE_TYPE_OPTIONS = [
   { value: "all", label: "全部类型" },
   { value: "summer_camp", label: "夏令营" },
   { value: "pre_admission", label: "预推免" },
-  { value: "seminar", label: "宣讲会" },
+  { value: "admission_guide", label: "招生简章" },
   { value: "admission_list", label: "入营名单" },
+  { value: "offer_list", label: "拟录取" },
+  { value: "direct_phd", label: "直博" },
+  { value: "combined_degree", label: "硕博连读" },
+  { value: "seminar", label: "招生宣讲" },
 ] as const;
 
 /** 通知状态选项 */
@@ -102,6 +106,8 @@ export const NAV_ITEMS = [
       { title: "信息聚合", href: "/info/notices", description: "夏令营、预推免、宣讲会等招生信息汇总" },
       { title: "院校库", href: "/info/schools", description: "985/211/双一流院校信息" },
       { title: "导师库", href: "/info/tutors", description: "按学校/方向/关键词搜索导师" },
+      { title: "竞赛信息", href: "/info/competitions", description: "保研加分竞赛指南与报名信息" },
+      { title: "期刊会议", href: "/info/journals", description: "适合本科生投稿的期刊与会议" },
     ],
   },
   {
@@ -124,7 +130,6 @@ export const NAV_ITEMS = [
       { title: "文书模板", href: "/knowledge/templates", description: "个人陈述、推荐信等模板" },
       { title: "经验精选", href: "/knowledge/experiences", description: "审核通过的高质量经验帖" },
       { title: "信息差速递", href: "/knowledge/tips", description: "保研过程中的信息差知识" },
-      { title: "个人知识库", href: "/user/knowledge", description: "我的收藏、笔记与标签管理" },
     ],
   },
   {
@@ -134,9 +139,5 @@ export const NAV_ITEMS = [
   {
     title: "社群",
     href: "/community",
-  },
-  {
-    title: "关于我们",
-    href: "/about",
   },
 ] as const;

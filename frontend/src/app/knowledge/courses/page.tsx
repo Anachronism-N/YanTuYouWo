@@ -114,11 +114,11 @@ export default function CoursesPage() {
             <motion.div key={course.id}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}>
-              <Card className="shadow-sm hover:shadow-lg transition-all group cursor-pointer h-full overflow-hidden">
+              <Card className="shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer h-full overflow-hidden">
                 <CardContent className="p-0">
                   {/* 封面区域 */}
                   <div className="relative h-36 bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/80 shadow-lg group-hover:scale-110 transition-transform">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/80 dark:bg-black/50 shadow-lg group-hover:scale-110 transition-transform">
                       <Play className="h-6 w-6 text-violet-600 ml-0.5" />
                     </div>
                     <div className="absolute top-3 left-3 flex gap-1.5">
@@ -150,7 +150,13 @@ export default function CoursesPage() {
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-0.5 text-amber-500 font-medium">
-                          <Star className="h-3 w-3 fill-amber-500" /> {course.rating}
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-3 w-3 ${i < Math.round(course.rating) ? "fill-amber-500 text-amber-500" : "fill-muted text-muted"}`}
+                            />
+                          ))}
+                          <span className="ml-0.5">{course.rating}</span>
                         </span>
                         <span className="flex items-center gap-0.5">
                           <Users className="h-3 w-3" /> {course.view_count >= 1000 ? `${(course.view_count / 1000).toFixed(1)}k` : course.view_count}

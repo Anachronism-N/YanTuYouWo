@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutGrid, List } from "lucide-react";
+import { FileText, LayoutGrid, List } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -48,7 +48,7 @@ function filtersToParams(filters: FilterValues, page: number, viewMode: string):
 export default function NoticesPage() {
   return (
     <Suspense fallback={
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <NoticeListSkeleton count={5} />
       </div>
     }>
@@ -154,7 +154,7 @@ function NoticesContent() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* 面包屑 */}
       <Breadcrumb>
         <BreadcrumbList>
@@ -169,14 +169,17 @@ function NoticesContent() {
       </Breadcrumb>
 
       {/* 页面标题 + 视图切换 */}
-      <div className="mt-6 flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold sm:text-3xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-            保研信息聚合
-          </h1>
-          <p className="mt-1.5 text-muted-foreground">
-            全国高校夏令营、预推免、宣讲会等招生信息，实时更新
-          </p>
+      <div className="mt-6 flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
+            <FileText className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">保研信息聚合</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              全国高校夏令营、预推免、宣讲会等招生信息，实时更新
+            </p>
+          </div>
         </div>
 
         {/* 视图切换按钮 */}

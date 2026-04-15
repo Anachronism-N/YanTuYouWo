@@ -305,7 +305,7 @@ export default function TutorsPage() {
               </div>
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">导师库</h1>
             </div>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               搜索全国高校导师信息，了解研究方向与招生情况
             </p>
           </div>

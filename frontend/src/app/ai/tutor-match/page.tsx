@@ -447,7 +447,7 @@ function ResultView({ tutors, input, onReset }: { tutors: MatchedTutor[]; input:
       {/* 导师卡片列表 */}
       <div className="space-y-4">
         {tutors.map((tutor) => (
-          <Card key={tutor.id} className={cn("transition-all hover:shadow-md", expandedId === tutor.id && "shadow-md ring-1 ring-primary/20")}>
+          <Card key={tutor.id} className={cn("transition-all hover:shadow-md hover:-translate-y-0.5", expandedId === tutor.id && "shadow-md ring-1 ring-primary/20")}>
             <CardContent className="p-0">
               <button onClick={() => setExpandedId(expandedId === tutor.id ? null : tutor.id)} className="w-full p-5 sm:p-6 text-left">
                 <div className="flex items-start gap-5">

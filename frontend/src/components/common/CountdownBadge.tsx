@@ -60,7 +60,18 @@ export default function CountdownBadge({ deadline, className, compact }: Countdo
     if (isExpired) {
       return (
         <div className={`text-center ${className || ""}`}>
-          <div className="text-xs text-muted-foreground">已截止</div>
+          <div className="text-xs text-red-500 dark:text-red-400">已截止</div>
+        </div>
+      );
+    }
+
+    if (days === 0) {
+      return (
+        <div className={`text-center ${className || ""}`}>
+          <div className="text-xs text-muted-foreground leading-tight">距报名截止</div>
+          <div className={`text-lg font-bold leading-tight ${urgencyColors[urgency]}`}>
+            不足1天
+          </div>
         </div>
       );
     }

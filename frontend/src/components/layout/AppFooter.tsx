@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { GraduationCap, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import { SITE_NAME } from "@/lib/constants";
 
 const footerLinks = [
@@ -28,10 +28,8 @@ export default function AppFooter() {
           {/* Logo & 简介 */}
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-500">
-                <GraduationCap className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-lg font-bold">{SITE_NAME}</span>
+              <Image src="/images/logo.png" alt={SITE_NAME} width={36} height={36} className="h-9 w-9 rounded-lg object-contain" />
+              <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">{SITE_NAME}</span>
             </Link>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
               一站式保研信息聚合平台，汇集全国高校夏令营、预推免招生信息，助力你的保研之路。
@@ -61,7 +59,7 @@ export default function AppFooter() {
         {/* Slogan 品牌展示 */}
         <div className="mt-10 flex justify-center border-t pt-8">
           <Image
-            src="/slogan.png"
+            src="/images/slogan.png"
             alt="研途有我品牌标语"
             width={320}
             height={80}

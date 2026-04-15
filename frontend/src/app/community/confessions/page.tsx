@@ -50,13 +50,13 @@ export default function ConfessionsPage() {
           </div>
           <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)}
             placeholder="在这里倾诉你的心声，无论是喜悦、焦虑还是吐槽..."
-            className="w-full rounded-xl border bg-background px-4 py-3 text-sm min-h-[80px] resize-y focus:outline-none focus:ring-2 focus:ring-pink-200 transition-shadow" />
+            className="w-full rounded-xl border bg-background px-4 py-3 text-sm min-h-[80px] resize-y focus:outline-none focus:ring-2 focus:ring-pink-200 dark:focus:ring-pink-500/30 transition-shadow" />
           <div className="flex items-center justify-between mt-3">
             <div className="flex gap-2">
               {["😢", "😅", "😟", "🥳", "💪", "😤"].map((m) => (
                 <button key={m} onClick={() => setSelectedMood(m)}
                   className={cn("h-8 w-8 rounded-full text-lg flex items-center justify-center transition-all",
-                    selectedMood === m ? "bg-pink-100 ring-2 ring-pink-300 scale-110" : "hover:bg-muted/50")}>
+                    selectedMood === m ? "bg-pink-100 ring-2 ring-pink-300 dark:bg-pink-500/20 dark:ring-pink-500/40 scale-110" : "hover:bg-muted/50")}>
                   {m}
                 </button>
               ))}

@@ -7,6 +7,7 @@ import {
   FileText, Star, Lightbulb, Search, TrendingUp,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const knowledgeNav = [
@@ -63,25 +64,23 @@ export default function KnowledgeLayout({ children }: { children: React.ReactNod
       <div className="flex gap-6">
         {/* 左侧导航 */}
         <aside className="hidden lg:block w-52 shrink-0">
-          <div className="sticky top-20 space-y-1">
-            {knowledgeNav.map((item) => {
-              const Icon = item.icon;
-              const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href) && pathname !== "/knowledge";
-              if (item.exact) {
-                // 首页只在精确匹配时高亮
-              }
-              return (
-                <Link key={item.href} href={item.href}
-                  className={cn("flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
-                    (item.exact ? pathname === item.href : pathname.startsWith(item.href) && !item.exact)
-                      ? "bg-violet-500/10 text-violet-700 dark:text-violet-400"
-                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground")}>
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {item.title}
-                </Link>
-              );
-            })}
-          </div>
+          <Card className="sticky top-20 shadow-sm">
+            <nav className="p-2 space-y-1">
+              {knowledgeNav.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link key={item.href} href={item.href}
+                    className={cn("flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
+                      (item.exact ? pathname === item.href : pathname.startsWith(item.href) && !item.exact)
+                        ? "bg-violet-500/10 text-violet-700 dark:text-violet-400"
+                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground")}>
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {item.title}
+                  </Link>
+                );
+              })}
+            </nav>
+          </Card>
         </aside>
 
         {/* 移动端导航 */}

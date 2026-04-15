@@ -155,7 +155,7 @@ function TopicSelector({ onSelect, mode, onModeChange }: {
             {MOOD_OPTIONS.map((m) => (
               <button key={m.emoji} onClick={() => setSelectedMood(m.emoji)}
                 className={cn("flex flex-col items-center gap-1.5 rounded-xl border-2 px-5 py-4 transition-all",
-                  selectedMood === m.emoji ? m.color + " shadow-sm" : "border-transparent bg-muted/30 hover:bg-muted/50")}>
+                  selectedMood === m.emoji ? m.color + " shadow-sm" : "border-transparent bg-muted/30 hover:bg-muted/50 hover:shadow-sm hover:-translate-y-0.5")}>
                 <span className="text-2xl">{m.emoji}</span>
                 <span className="text-xs font-medium">{m.label}</span>
               </button>
@@ -172,7 +172,7 @@ function TopicSelector({ onSelect, mode, onModeChange }: {
             {TOPICS.map((t) => (
               <button key={t.id} onClick={() => setSelectedTopic(t.id)}
                 className={cn("flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all",
-                  selectedTopic === t.id ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-muted/30 hover:bg-muted/50")}>
+                  selectedTopic === t.id ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-muted/30 hover:bg-muted/50 hover:shadow-md hover:-translate-y-0.5")}>
                 <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", t.color)}>{t.icon}</div>
                 <div>
                   <p className="font-medium text-sm">{t.id}</p>
@@ -615,11 +615,11 @@ export default function MentalPage() {
       {/* 顶部 Tab（仅在非对话中显示） */}
       {phase === "select" && (
         <div className="flex justify-center mb-6">
-          <div className="inline-flex rounded-xl bg-muted/50 p-1 gap-1">
+          <div className="inline-flex rounded-xl bg-muted/50 backdrop-blur-sm shadow-sm p-1 gap-1">
             {MENTAL_TABS.map((tab) => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={cn("flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
-                  activeTab === tab.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                  activeTab === tab.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-background/50")}>
                 <tab.icon className="h-4 w-4" /> {tab.label}
               </button>
             ))}

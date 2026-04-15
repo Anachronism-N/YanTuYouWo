@@ -1735,3 +1735,28 @@ if len(results) >= self.MIN_ITEMS and len(results) > len(best_results):
 | `src/crawler/list_crawler.py` | 修复 `_is_navigation_page` 函数的严重bug（死代码问题） |
 | `src/processor/rule_filter.py` | 扩展栏目名列表 + 增加负面关键词 |
 | `scripts/fix_and_recrawl.py` | 全面修复脚本（源URL修复 + 数据清理 + 状态重置 + 重爬） |
+
+---
+
+## 第五轮：数据质量全面提升（2026-04-14）
+
+### 优化目标
+
+解决前后端联调中发现的 4 个数据质量问题：正文格式混乱、program_type "其他"占比过高（64.1%）、28.7% 通知缺少 publish_date、详情页图片信息丢失。
+
+### 代码变更
+
+| 文件 | 修改内容 |
+|------|----------|
+| `src/parser/content_extractor.py` | 全面重写：智能文本提取（区分行内/块级元素）、图片提取、迭代式日期重组、导航噪音去除 |
+| `src/llm/prompts.py` | program_type 扩展为 7 种 + 详细分类规则 + 日期提取强化 |
+| `src/processor/rule_filter.py` | 新增 `infer_program_type()` + 扩展关键词 |
+| `src/crawler/detail_crawler.py` | 图片提取、标题清洗、日期补全、program_type 纠正 |
+| `src/models/notice.py` | 新增 `images` JSON 字段 |
+| `src/parser/list_parser.py` | 新增日期格式支持 |
+| `backend/src/services/data_clean_service.py` | 新增数据清洗服务（标题/正文/日期） |
+| `backend/src/services/notice_service.py` | 集成清洗服务到 API 返回层 |
+
+### 测试
+
+28 项新增测试 + 12 项原有测试全部通过。

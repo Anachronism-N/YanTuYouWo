@@ -11,32 +11,49 @@ export type BgEffect =
   | "aurora"
   | "wave"
   | "starfield"
-  // 天气类
-  | "weather"       // 跟随实时天气
+  | "weather"
   | "weather-sunny"
   | "weather-cloudy"
   | "weather-rain"
   | "weather-storm"
   | "weather-snow"
-  | "weather-fog";
+  | "weather-fog"
+  | "weather-hail"
+  | "weather-sandstorm";
+
+export interface WeatherConfig {
+  cloudCover: number;       // 0-1
+  particleCount: number;    // 50-500
+  speed: number;            // 0.3-3
+  wind: number;             // -5 to 5
+  thunder: boolean;
+  fogDensity: number;       // 0-1
+  intensity: number;        // 0.3-3 (sun intensity / sand density)
+  temperature: number;      // -15 to 10 (snow melt)
+}
+
+export const DEFAULT_WEATHER_CONFIG: WeatherConfig = {
+  cloudCover: 0.5,
+  particleCount: 200,
+  speed: 1,
+  wind: 0,
+  thunder: false,
+  fogDensity: 0.5,
+  intensity: 1,
+  temperature: 0,
+};
 
 interface ThemeState {
-  /** 主题颜色 */
   color: ThemeColor;
-  /** 暗色模式 */
   darkMode: DarkMode;
-  /** 背景特效 */
   bgEffect: BgEffect;
-  /** 天气状态（自动获取） */
   weatherCondition: string;
-  /** 设置主题颜色 */
+  weatherConfig: WeatherConfig;
   setColor: (c: ThemeColor) => void;
-  /** 设置暗色模式 */
   setDarkMode: (m: DarkMode) => void;
-  /** 设置背景特效 */
   setBgEffect: (e: BgEffect) => void;
-  /** 设置天气状态 */
   setWeatherCondition: (w: string) => void;
+  setWeatherConfig: (cfg: Partial<WeatherConfig>) => void;
 }
 
 export const useThemeStore = create<ThemeState>()(
@@ -46,12 +63,25 @@ export const useThemeStore = create<ThemeState>()(
       darkMode: "light",
       bgEffect: "gradient",
       weatherCondition: "clear",
+      weatherConfig: { ...DEFAULT_WEATHER_CONFIG },
       setColor: (color) => set({ color }),
       setDarkMode: (darkMode) => set({ darkMode }),
       setBgEffect: (bgEffect) => set({ bgEffect }),
       setWeatherCondition: (weatherCondition) => set({ weatherCondition }),
+      setWeatherConfig: (cfg) => set((s) => ({ weatherConfig: { ...s.weatherConfig, ...cfg } })),
     }),
-    { name: "yantu-theme" },
+    {
+      name: "yantu-theme",
+      merge: (persisted, current) => {
+        const p = persisted as Partial<ThemeState> | undefined;
+        if (!p) return current;
+        return {
+          ...current,
+          ...p,
+          weatherConfig: { ...DEFAULT_WEATHER_CONFIG, ...(p.weatherConfig || {}) },
+        };
+      },
+    },
   ),
 );
 
@@ -86,8 +116,10 @@ export const BG_EFFECT_GROUPS: { label: string; items: { key: BgEffect; label: s
       { key: "weather-cloudy", label: "多云",     emoji: "⛅" },
       { key: "weather-rain",   label: "雨天",     emoji: "🌧️" },
       { key: "weather-storm",  label: "雷暴",     emoji: "⛈️" },
-      { key: "weather-snow",   label: "雪天",     emoji: "❄️" },
-      { key: "weather-fog",    label: "雾天",     emoji: "🌫️" },
+      { key: "weather-snow",      label: "雪天",     emoji: "❄️" },
+      { key: "weather-fog",       label: "雾天",     emoji: "🌫️" },
+      { key: "weather-hail",      label: "冰雹",     emoji: "🧊" },
+      { key: "weather-sandstorm", label: "沙尘暴",   emoji: "🏜️" },
     ],
   },
 ];

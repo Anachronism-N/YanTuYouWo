@@ -129,7 +129,7 @@ export default function RegisterPage() {
           {/* Slogan 装饰图 */}
           <div className="hidden lg:flex justify-center mb-8">
             <Image
-              src="/slogan_AD.png"
+              src="/images/slogan_AD.png"
               alt={SITE_NAME}
               width={360}
               height={90}
@@ -149,7 +149,7 @@ export default function RegisterPage() {
 
           <Card className="mt-8 border-0 shadow-none lg:border lg:shadow-sm lg:hover:shadow-md transition-shadow duration-300">
             <CardContent className="p-0 lg:p-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 {/* 昵称 */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium" htmlFor="nickname">
@@ -226,12 +226,19 @@ export default function RegisterPage() {
                       id="confirmPassword"
                       type={showPassword ? "text" : "password"}
                       placeholder="再次输入密码"
-                      className="pl-10 h-11"
+                      className="pl-10 pr-10 h-11"
                       value={form.confirmPassword}
                       onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
                       minLength={8}
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
 

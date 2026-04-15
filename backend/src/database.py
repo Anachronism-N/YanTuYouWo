@@ -1,5 +1,6 @@
 """数据库连接与会话管理"""
 
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from src.config import get_settings
 
@@ -10,15 +11,32 @@ def _create_engine():
     url = settings.database_url
 
     connect_args = {}
-    if url.startswith("sqlite"):
-        # SQLite 需要允许多线程访问
-        connect_args["check_same_thread"] = False
+    kwargs = {}
 
-    return create_async_engine(
+    if url.startswith("sqlite"):
+        connect_args["check_same_thread"] = False
+    else:
+        kwargs["pool_size"] = 10
+        kwargs["max_overflow"] = 20
+        kwargs["pool_recycle"] = 3600
+
+    eng = create_async_engine(
         url,
-        echo=settings.DEBUG,
+        echo=False,
         connect_args=connect_args,
+        **kwargs,
     )
+
+    # SQLite WAL mode: 防止 "database is locked" 并发写冲突
+    if url.startswith("sqlite"):
+        @event.listens_for(eng.sync_engine, "connect")
+        def _set_sqlite_pragma(dbapi_conn, connection_record):
+            cursor = dbapi_conn.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA busy_timeout=5000")
+            cursor.close()
+
+    return eng
 
 
 engine = _create_engine()

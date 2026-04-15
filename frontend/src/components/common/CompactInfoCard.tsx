@@ -24,10 +24,15 @@ const statusLabel: Record<NoticeStatus, string> = {
 
 /** 通知类型配色 */
 const typeColors: Record<string, string> = {
-  "夏令营": "bg-blue-50 text-blue-700 border-blue-200",
-  "预推免": "bg-purple-50 text-purple-700 border-purple-200",
-  "宣讲会": "bg-amber-50 text-amber-700 border-amber-200",
-  "入营名单": "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "夏令营": "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/30",
+  "预推免": "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/30",
+  "招生简章": "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/30",
+  "入营名单": "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30",
+  "拟录取": "bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/30",
+  "直博": "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30",
+  "硕博连读": "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/30",
+  "招生宣讲": "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30",
+  "宣讲会": "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30",
 };
 
 export default function CompactInfoCard({ notice }: CompactInfoCardProps) {
@@ -68,7 +73,7 @@ export default function CompactInfoCard({ notice }: CompactInfoCardProps) {
         <div className="shrink-0 hidden md:block">
           <Badge
             variant="outline"
-            className={`text-xs font-normal ${typeColors[notice.program_type] || "bg-gray-50 text-gray-600 border-gray-200"}`}
+            className={`text-xs font-normal ${typeColors[notice.program_type] || "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-500/10 dark:text-gray-400 dark:border-gray-500/30"}`}
           >
             {notice.program_type}
           </Badge>

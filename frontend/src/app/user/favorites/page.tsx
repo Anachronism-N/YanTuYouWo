@@ -74,8 +74,13 @@ export default function FavoritesPage() {
     <div className="space-y-6">
       {/* 页面标题 */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">我的收藏</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Heart className="h-5 w-5" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">我的收藏</h1>
+        </div>
+        <p className="text-sm text-muted-foreground">
           管理你收藏的通知、院校和导师
         </p>
       </div>

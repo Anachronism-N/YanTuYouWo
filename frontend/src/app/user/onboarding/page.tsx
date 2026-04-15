@@ -224,26 +224,49 @@ export default function OnboardingPage() {
         <div className="flex items-center justify-center gap-2 mb-8">
           {STEPS.map((s, i) => (
             <div key={s.id} className="flex items-center">
-              <button
+              <motion.button
                 onClick={() => setStep(s.id)}
-                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                animate={
+                  step === s.id
+                    ? { scale: [1, 1.08, 1], transition: { duration: 0.35 } }
+                    : { scale: 1 }
+                }
+                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                   step === s.id
                     ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                     : step > s.id
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
                 {step > s.id ? (
-                  <Check className="h-4 w-4" />
+                  <motion.span
+                    initial={{ scale: 0, rotate: -90 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                  >
+                    <Check className="h-4 w-4" />
+                  </motion.span>
                 ) : (
                   <s.icon className="h-4 w-4" />
                 )}
                 <span className="hidden sm:inline">{s.title}</span>
                 <span className="sm:hidden">{s.id}</span>
-              </button>
+              </motion.button>
               {i < STEPS.length - 1 && (
-                <ChevronRight className="h-4 w-4 mx-1 text-muted-foreground/50" />
+                <div className="mx-1 flex items-center">
+                  <motion.div
+                    className="h-0.5 w-6 rounded-full"
+                    animate={{
+                      backgroundColor: step > s.id + 1 || (step > s.id)
+                        ? "var(--color-primary)"
+                        : "hsl(var(--muted))",
+                    }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
               )}
             </div>
           ))}

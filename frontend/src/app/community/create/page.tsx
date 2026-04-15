@@ -66,7 +66,7 @@ export default function CreatePostPage() {
               {tags.map((t) => <Badge key={t} variant="outline">{t}</Badge>)}
             </div>
             <h1 className="text-2xl font-bold mb-4">{title || "无标题"}</h1>
-            <div className="prose prose-sm max-w-none">
+            <div className="prose prose-sm dark:prose-invert max-w-none">
               {content.split("\n").map((line, i) => (
                 <p key={i}>{line || <br />}</p>
               ))}

@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   // 图片优化
   images: {
     formats: ["image/avif", "image/webp"],
+    remotePatterns: [
+      { protocol: "https", hostname: "upload.wikimedia.org" },
+      { protocol: "https", hostname: "static.wikia.nocookie.net" },
+    ],
   },
   // 编译器优化
   compiler: {

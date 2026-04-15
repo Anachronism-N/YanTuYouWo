@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  GraduationCap,
   Search,
   Menu,
   X,
   ChevronDown,
   User,
   Heart,
+  Shield,
   Settings,
   LogOut,
   BookOpen,
@@ -33,9 +34,7 @@ export default function AppHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-500 shadow-sm">
-            <GraduationCap className="h-5 w-5 text-white" />
-          </div>
+          <Image src="/images/logo.png" alt={SITE_NAME} width={36} height={36} className="h-9 w-9 rounded-lg object-contain" />
           <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">{SITE_NAME}</span>
         </Link>
 
@@ -102,7 +101,15 @@ export default function AppHeader() {
 
         {/* 右侧操作区 */}
         <div className="flex items-center gap-2">
-          <Link href="/info/notices">
+          <button
+            onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+            className="hidden sm:flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span>搜索</span>
+            <kbd className="ml-2 rounded border bg-muted/60 px-1.5 py-0.5 text-[11px] text-muted-foreground font-sans">Ctrl+K</kbd>
+          </button>
+          <Link href="/info/notices" className="sm:hidden">
             <Button variant="ghost" size="icon" className="h-9 w-9">
               <Search className="h-4 w-4" />
             </Button>
@@ -132,21 +139,30 @@ export default function AppHeader() {
                       <p className="text-sm font-medium truncate">{user.nickname}</p>
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
-                    <Link href="/user" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent">
+                    <Link href="/user" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:translate-x-0.5">
                       <User className="h-4 w-4" /> 个人资料
                     </Link>
-                    <Link href="/user/knowledge" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent">
+                    <Link href="/user/knowledge" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:translate-x-0.5">
                       <BookOpen className="h-4 w-4" /> 个人知识库
                     </Link>
-                    <Link href="/progress" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent">
+                    <Link href="/progress" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:translate-x-0.5">
                       <Target className="h-4 w-4" /> 进度中心
                     </Link>
-                    <Link href="/user/favorites" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent">
+                    <Link href="/user/favorites" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:translate-x-0.5">
                       <Heart className="h-4 w-4" /> 我的收藏
                     </Link>
-                    <Link href="/user/settings" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent">
+                    <Link href="/user/settings" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:translate-x-0.5">
                       <Settings className="h-4 w-4" /> 设置
                     </Link>
+                    <div className="my-1 border-t" />
+                    <Link href="/about" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:translate-x-0.5 text-muted-foreground">
+                      <BookOpen className="h-4 w-4" /> 关于我们
+                    </Link>
+                    {user.role === "admin" && (
+                      <Link href="/admin" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:translate-x-0.5 text-primary font-medium">
+                        <Shield className="h-4 w-4" /> 管理后台
+                      </Link>
+                    )}
                     <button
                       onClick={logout}
                       className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 dark:text-red-400 transition-all hover:bg-red-50 dark:hover:bg-red-500/10"

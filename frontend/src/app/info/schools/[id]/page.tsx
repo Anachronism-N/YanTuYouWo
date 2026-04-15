@@ -160,6 +160,7 @@ export default function SchoolDetailPage() {
       <Tabs defaultValue="departments" className="w-full">
         <TabsList>
           <TabsTrigger value="departments">学院列表</TabsTrigger>
+          <TabsTrigger value="chart">通知分布</TabsTrigger>
           <TabsTrigger value="notices">最新通知 ({schoolNotices.length})</TabsTrigger>
           <TabsTrigger value="about">院校简介</TabsTrigger>
         </TabsList>
@@ -207,6 +208,37 @@ export default function SchoolDetailPage() {
               </div>
             )}
           </div>
+        </TabsContent>
+
+        {/* 通知分布图 */}
+        <TabsContent value="chart" className="mt-6">
+          <Card>
+            <CardContent className="p-5">
+              <h3 className="text-sm font-semibold mb-4">各学院通知数量</h3>
+              <div className="space-y-2">
+                {school.departments
+                  .filter((d) => d.notice_count > 0)
+                  .sort((a, b) => b.notice_count - a.notice_count)
+                  .slice(0, 15)
+                  .map((dept) => {
+                    const maxCount = Math.max(...school.departments.map((d) => d.notice_count), 1);
+                    const pct = (dept.notice_count / maxCount) * 100;
+                    return (
+                      <div key={dept.id} className="flex items-center gap-3 group">
+                        <span className="text-xs text-muted-foreground w-32 truncate shrink-0 text-right">{dept.name}</span>
+                        <div className="flex-1 h-5 rounded-full bg-muted/30 overflow-hidden">
+                          <div className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-500 group-hover:from-primary group-hover:to-blue-500" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-xs font-medium w-8 text-right tabular-nums">{dept.notice_count}</span>
+                      </div>
+                    );
+                  })}
+                {school.departments.filter((d) => d.notice_count > 0).length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-8">暂无通知数据</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* 最新通知 */}

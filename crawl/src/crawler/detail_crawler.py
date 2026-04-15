@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, date
 from typing import Optional
 
@@ -10,9 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.notice import AdmissionNotice
 from src.utils.http_client import http_client
-from src.parser.content_extractor import extract_content
+from src.parser.content_extractor import extract_content_with_images
 from src.storage.snapshot import save_snapshot
-from src.processor.rule_filter import relevance_score
+from src.processor.rule_filter import relevance_score, infer_program_type
 from src.llm.client import llm_client
 
 
@@ -69,11 +70,42 @@ async def process_notice(
             logger.warning(f"详情页请求失败: {url}")
             return None
 
-        # 2. 提取正文
-        content = extract_content(detail_html)
-        if not content or len(content) < 50:
-            logger.warning(f"正文提取失败或内容过短({len(content) if content else 0}字): {url}")
+        # 2. 提取正文和图片
+        content, images = extract_content_with_images(detail_html, url)
+
+        # 2.5 内容质量检查（图片多的通知文字可以少一些）
+        content_len = len(content) if content else 0
+        has_images = len(images) >= 1
+        chinese_words = re.findall(r"[\u4e00-\u9fa5]+", content or "")
+        useful_len = sum(len(w) for w in chinese_words if len(w) > 3)
+
+        if content_len < 50 and not has_images:
+            logger.warning(f"正文过短且无图片({content_len}字): {url}")
             return None
+        if useful_len < 80 and not has_images:
+            logger.warning(f"有效内容不足且无图片({useful_len}字有效中文): {title}")
+            return None
+        if useful_len < 20 and not has_images:
+            logger.warning(f"正文几乎为空({useful_len}字): {title}")
+            return None
+
+        # 2.6 导航菜单检测（有图片时跳过此检查）
+        if not has_images and content:
+            lines = [l.strip() for l in content.split("\n") if l.strip()]
+            if len(lines) >= 5:
+                short_count = sum(1 for l in lines[:15] if len(l) <= 10 and not re.search(r"\d{4}", l))
+                has_sentence = any(len(l) > 20 and re.search(r"[，。、；]", l) for l in lines[:15])
+                if short_count >= 10 and not has_sentence:
+                    logger.warning(f"正文疑似导航菜单，拒绝入库: {title}")
+                    return None
+
+            # 2.7 无标点菜单拼接检测
+            first_200 = content[:200]
+            cn_in_200 = len(re.findall(r"[\u4e00-\u9fa5]", first_200))
+            has_punct_200 = bool(re.search(r"[，。、；：！？,.;:!?（）\(\)]", first_200))
+            if cn_in_200 > 30 and not has_punct_200:
+                logger.warning(f"正文无标点(疑似菜单拼接)，拒绝入库: {title}")
+                return None
 
         # 3. LLM 分类（只有包含强相关关键词的高置信度通知才跳过分类）
         # 检查标题是否包含推免相关的强关键词
@@ -104,15 +136,25 @@ async def process_notice(
         # 7. 计算置信度
         confidence = _calculate_confidence(extracted, score)
 
-        # 8. 构建通知对象
+        # 8. 推断 program_type（纠正 LLM 的"其他"分类）
+        final_program_type = infer_program_type(
+            title, extracted.get("program_type")
+        )
+
+        # 9. 尝试从标题补全缺失的 publish_date
+        publish_date = _parse_date(item.get("date"))
+        if not publish_date:
+            publish_date = _extract_date_from_title(title)
+
+        # 10. 构建通知对象
         notice = AdmissionNotice(
             university_id=university_id,
             department_id=department_id,
             source_id=source_id,
-            title=title,
+            title=_clean_title(title),
             source_url=url,
-            publish_date=_parse_date(item.get("date")),
-            program_type=extracted.get("program_type"),
+            publish_date=publish_date,
+            program_type=final_program_type,
             year=_parse_int(extracted.get("year")),
             target_degree=extracted.get("target_degree"),
             disciplines=extracted.get("disciplines"),
@@ -125,7 +167,8 @@ async def process_notice(
             registration_url=extracted.get("registration_url"),
             contact=extracted.get("contact"),
             summary=extracted.get("summary"),
-            raw_content=content[:10000],  # 限制存储长度
+            raw_content=content[:10000],
+            images=images[:20] if images else None,
             raw_html_path=snapshot_path,
             llm_model="Qwen/Qwen2.5-32B-Instruct",
             llm_confidence=confidence,
@@ -178,7 +221,7 @@ def _validate_and_fix(extracted: dict, title: str, list_date: str | None) -> dic
     - 校验target_degree枚举值
     """
     # 校验 program_type
-    valid_types = {"夏令营", "预推免", "直博", "硕博连读", "其他"}
+    valid_types = {"夏令营", "预推免", "直博", "硕博连读", "招生简章", "入营名单", "拟录取", "招生宣讲", "其他"}
     if extracted.get("program_type") not in valid_types:
         # 尝试从标题推断
         if "夏令营" in title:
@@ -330,11 +373,43 @@ def _parse_int(value) -> Optional[int]:
         return None
 
 
+def _clean_title(title: str) -> str:
+    """清洗标题：移除前缀日期和其他噪音"""
+    # "132026.03清华大学..." → "清华大学..."
+    title = re.sub(r"^\d{1,4}(\d{4})[./]\d{1,2}", "", title)
+    # "162025-06标题" → "标题"
+    title = re.sub(r"^\d{1,3}(\d{4})[-./](\d{1,2})", r"\1-\2", title)
+    # 标准日期前缀
+    title = re.sub(r"^\d{4}[-./]\d{1,2}[-./]\d{1,2}\s*", "", title)
+    title = re.sub(r"^\d{4}[-./]\d{1,2}\s*", "", title)
+    title = re.sub(r"^\d{4}年\d{1,2}月\d{1,2}日?\s*", "", title)
+    return title.strip()
+
+
+def _extract_date_from_title(title: str) -> Optional[date]:
+    """从标题中提取日期（用于补全缺失的 publish_date）"""
+    patterns = [
+        (r"^(\d{4})-(\d{1,2})-(\d{1,2})", None),
+        (r"^(\d{4})\.(\d{1,2})\.(\d{1,2})", None),
+        (r"^(\d{4})/(\d{1,2})/(\d{1,2})", None),
+        (r"^(\d{4})年(\d{1,2})月(\d{1,2})日?", None),
+    ]
+    for pattern, _ in patterns:
+        m = re.match(pattern, title.strip())
+        if m:
+            try:
+                return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+            except (ValueError, TypeError):
+                continue
+    return None
+
+
 async def _fetch_with_fallback(url: str) -> Optional[str]:
     """
     请求详情页，支持反爬降级。
 
     降级策略：
+    0. 微信文章直接用 Playwright（httpx 会被反爬拦截）
     1. 先用 httpx 请求
     2. 如果返回 202/412（疑似反爬），尝试 Playwright 渲染
     3. 如果 Playwright 也失败，返回 None
@@ -345,6 +420,11 @@ async def _fetch_with_fallback(url: str) -> Optional[str]:
     Returns:
         HTML 内容，失败返回 None
     """
+    # 0. 微信文章直接用 Playwright（httpx 会被微信反爬拦截）
+    if "mp.weixin.qq.com" in url:
+        logger.info(f"微信文章，直接使用 Playwright: {url}")
+        return await _fetch_with_playwright(url, wait_time=8000)
+
     # 1. 先用 httpx 请求
     result = await http_client.fetch(url, return_status=True)
     if isinstance(result, tuple):
@@ -399,13 +479,33 @@ async def _fetch_with_playwright(url: str, wait_time: int = 3000) -> Optional[st
                 locale="zh-CN",
             )
             page = await context.new_page()
-
-            # 设置超时
             page.set_default_timeout(30000)
 
-            await page.goto(url, wait_until="domcontentloaded")
-            # 等待页面加载完成（反爬页面需要更长时间执行JS）
+            try:
+                await page.goto(url, wait_until="networkidle", timeout=20000)
+            except Exception:
+                try:
+                    await page.goto(url, wait_until="load", timeout=15000)
+                except Exception:
+                    pass
+
             await page.wait_for_timeout(wait_time)
+
+            # Wait for common content selectors (SPA may need time)
+            for sel in ["ul.news_list li a", ".list_item a", "article a", ".news-list li a",
+                         "table.list a", ".article-list a", ".notice-list a", "li a[href]"]:
+                try:
+                    await page.wait_for_selector(sel, timeout=3000)
+                    break
+                except Exception:
+                    continue
+
+            # Scroll down to trigger lazy loading
+            try:
+                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                await page.wait_for_timeout(1000)
+            except Exception:
+                pass
 
             html = await page.content()
             await browser.close()

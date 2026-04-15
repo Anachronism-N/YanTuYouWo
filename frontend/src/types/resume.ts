@@ -233,7 +233,7 @@ export interface AISuggestion {
 }
 
 /** 简历模板 */
-export type ResumeTemplate = "academic" | "concise" | "modern";
+export type ResumeTemplate = "academic" | "modern" | "professional" | "elegant" | "minimal" | "latex";
 
 /** 简历模板信息 */
 export interface ResumeTemplateInfo {

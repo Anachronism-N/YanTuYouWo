@@ -104,7 +104,7 @@ export default function ResourcesPage() {
                       <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {r.date}</span>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="shrink-0 self-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button variant="outline" size="sm" className="shrink-0 self-center gap-1.5 transition-opacity">
                     <Download className="h-3.5 w-3.5" /> 下载
                   </Button>
                 </CardContent>

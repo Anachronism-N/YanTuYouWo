@@ -33,6 +33,8 @@ export interface UserProfile {
   research_interests: string[];
   /** 是否已完成引导填写 */
   is_onboarded: boolean;
+  /** 用户角色 */
+  role: "user" | "admin";
   /** 注册时间 */
   created_at: string;
 }

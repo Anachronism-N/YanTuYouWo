@@ -18,7 +18,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "admin@yantu.com", password: "admin123" });
   const { setUser, setFavorites } = useUserStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,7 +108,7 @@ export default function LoginPage() {
           {/* Slogan 装饰图 */}
           <div className="hidden lg:flex justify-center mb-8">
             <Image
-              src="/slogan_AD.png"
+              src="/images/slogan_AD.png"
               alt={SITE_NAME}
               width={360}
               height={90}

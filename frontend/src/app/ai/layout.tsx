@@ -31,7 +31,7 @@ export default function AILayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* 功能导航 Tab */}
-      <div className="mb-6 flex gap-3">
+      <div className="mb-6 flex gap-1.5 rounded-xl bg-muted/50 backdrop-blur-sm shadow-sm p-1.5 overflow-x-auto">
         {aiNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname.startsWith(item.href);
@@ -40,10 +40,10 @@ export default function AILayout({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
+                "flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap shrink-0",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                  : "text-muted-foreground hover:bg-background/80 hover:text-foreground hover:shadow-sm"
               )}
             >
               <Icon className="h-4 w-4" />

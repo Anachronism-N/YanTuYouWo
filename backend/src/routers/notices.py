@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
-from src.schemas.notice import NoticeItem, NoticeDetail, NoticeListResponse
+from src.schemas.notice import NoticeDetail, NoticeListResponse
 from src.services import notice_service
 
 router = APIRouter(prefix="/notices", tags=["通知"])

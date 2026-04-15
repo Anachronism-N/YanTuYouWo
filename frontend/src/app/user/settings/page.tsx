@@ -61,8 +61,13 @@ export default function SettingsPage() {
       {/* 页面标题 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">设置</h1>
-          <p className="text-sm text-muted-foreground mt-1">管理通知偏好和关注内容</p>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Settings className="h-5 w-5" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">设置</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">管理通知偏好和关注内容</p>
         </div>
         <Button className="gap-1.5" onClick={handleSave}>
           {saved ? (

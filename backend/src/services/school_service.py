@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select, func, or_, desc, asc
+from sqlalchemy import select, func, or_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.models.university import University, Department
 from src.models.notice import AdmissionNotice
@@ -193,4 +192,9 @@ async def get_school_notices(
 ):
     """获取院校下的通知列表"""
     from src.services.notice_service import get_notices
-    return await get_notices(db, university=None, page=page, size=size)
+    uni_result = await db.execute(select(University.name).where(University.id == school_id))
+    uni_name = uni_result.scalar_one_or_none()
+    if not uni_name:
+        from src.schemas.notice import NoticeListResponse
+        return NoticeListResponse(total=0, items=[], filters={})
+    return await get_notices(db, university=uni_name, page=page, size=size)

@@ -206,13 +206,42 @@ backend/
 | GET | `/api/user/favorites/check` | 检查是否已收藏 | ✅ |
 
 **核心任务**：
-1. 新增 `User` 模型（id, email, password_hash, username, nickname, avatar_url, ...）
+1. 新增 `User` 模型（id, email, password_hash, username, nickname, avatar_url, **role**, ...）
+   - `role` 字段：`"user"` | `"admin"`，默认 `"user"`
 2. 新增 `Favorite` 模型（user_id, type, target_id）
-3. 实现 JWT 认证中间件（`dependencies.py` 中的 `get_current_user`）
+3. 实现 JWT 认证中间件（`dependencies.py` 中的 `get_current_user`、`require_admin`）
 4. 实现 `auth_service`（注册、登录、密码哈希）
 5. 实现 `user_service`（个人信息 CRUD、设置 CRUD）
 6. 实现 `favorite_service`（收藏 CRUD、检查）
 7. 前端对接：登录后 axios 拦截器自动携带 `Authorization: Bearer <token>`
+
+### Phase 2.5：管理员系统（前端已就绪）
+
+> **目标**：实现管理后台的后端 API，支持内容管理和上传
+
+**涉及前端页面**（已实现）：
+- `/admin` — 管理仪表盘
+- `/admin/notices` — 通知 CRUD 管理
+- `/admin/upload` — 内容上传（课程/模板/资料/题目/经验帖）
+
+**API 端点**（需后端实现）：
+
+| 方法 | 路径 | 说明 | 认证 |
+|---|---|---|---|
+| GET | `/api/admin/stats` | 管理后台统计数据 | ✅ Admin |
+| GET | `/api/admin/notices` | 通知列表（含草稿/归档） | ✅ Admin |
+| POST | `/api/admin/notices` | 创建通知（手动录入） | ✅ Admin |
+| PUT | `/api/admin/notices/{id}` | 编辑通知 | ✅ Admin |
+| DELETE | `/api/admin/notices/{id}` | 删除通知 | ✅ Admin |
+| PUT | `/api/admin/notices/{id}/status` | 更改通知状态（发布/草稿/归档） | ✅ Admin |
+| POST | `/api/admin/upload` | 文件上传（multipart/form-data） | ✅ Admin |
+| GET | `/api/admin/uploads` | 已上传内容列表 | ✅ Admin |
+| DELETE | `/api/admin/uploads/{id}` | 删除已上传内容 | ✅ Admin |
+| GET | `/api/admin/audit-log` | 操作审计日志 | ✅ Admin |
+
+**认证与权限**：
+- `require_admin` 装饰器检查 `user.role == "admin"`
+- 非 admin 用户访问 `/api/admin/*` 返回 403
 
 **交付标准**：
 - 用户可注册、登录

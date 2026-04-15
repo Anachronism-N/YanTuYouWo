@@ -391,15 +391,15 @@ function QuestionBank() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* 视图模式 */}
-            <div className="flex gap-1 bg-muted/50 rounded-lg p-0.5">
+            <div className="flex gap-1 bg-muted/50 backdrop-blur-sm shadow-sm rounded-lg p-0.5">
               <button onClick={() => setViewMode("list")}
                 className={cn("rounded-md px-2.5 py-1 text-xs font-medium transition-all",
-                  viewMode === "list" ? "bg-background shadow-sm" : "text-muted-foreground")}>
+                  viewMode === "list" ? "bg-background shadow-sm" : "text-muted-foreground hover:bg-background/50")}>
                 列表视图
               </button>
               <button onClick={() => setViewMode("project")}
                 className={cn("rounded-md px-2.5 py-1 text-xs font-medium transition-all",
-                  viewMode === "project" ? "bg-background shadow-sm" : "text-muted-foreground")}>
+                  viewMode === "project" ? "bg-background shadow-sm" : "text-muted-foreground hover:bg-background/50")}>
                 项目分组
               </button>
             </div>
@@ -967,11 +967,11 @@ export default function InterviewPage() {
       {/* 顶部 Tab 切换（仅在非面试中显示） */}
       {phase === "config" && (
         <div className="flex justify-center mb-6">
-          <div className="inline-flex rounded-xl bg-muted/50 p-1 gap-1">
+          <div className="inline-flex rounded-xl bg-muted/50 backdrop-blur-sm shadow-sm p-1 gap-1">
             {TABS.map((tab) => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={cn("flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
-                  activeTab === tab.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                  activeTab === tab.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-background/50")}>
                 <tab.icon className="h-4 w-4" /> {tab.label}
               </button>
             ))}

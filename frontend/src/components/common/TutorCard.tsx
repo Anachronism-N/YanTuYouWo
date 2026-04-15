@@ -9,7 +9,7 @@ import {
   Eye,
   CheckCircle2,
   XCircle,
-  Mail,
+  Lightbulb,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -52,8 +52,8 @@ export default function TutorCard({ tutor }: TutorCardProps) {
                     className={cn(
                       "shrink-0 text-xs",
                       tutor.is_recruiting
-                        ? "border-green-200 bg-green-50 text-green-700"
-                        : "border-gray-200 bg-gray-50 text-gray-500"
+                        ? "border-green-200 bg-green-50 text-green-700 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-400"
+                        : "border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-500/30 dark:bg-gray-500/10 dark:text-gray-400"
                     )}
                   >
                     {tutor.is_recruiting ? (
@@ -99,7 +99,7 @@ export default function TutorCard({ tutor }: TutorCardProps) {
             {/* 招生信息 */}
             {tutor.recruiting_info && (
               <p className="mt-3 text-xs text-muted-foreground line-clamp-1 bg-muted/50 rounded-md px-2.5 py-1.5">
-                💡 {tutor.recruiting_info}
+                <Lightbulb className="h-3 w-3 inline-block shrink-0" /> {tutor.recruiting_info}
               </p>
             )}
 

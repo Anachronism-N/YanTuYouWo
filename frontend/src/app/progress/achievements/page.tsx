@@ -21,7 +21,7 @@ const typeConfig: Record<string, { icon: typeof BookOpen; color: string }> = {
   "英语": { icon: Globe, color: "from-emerald-500/10 to-green-500/10 text-emerald-600" },
   "面试": { icon: Star, color: "from-rose-500/10 to-pink-500/10 text-rose-600" },
   "实习": { icon: Briefcase, color: "from-orange-500/10 to-red-500/10 text-orange-600" },
-  "其他": { icon: Heart, color: "from-gray-500/10 to-slate-500/10 text-gray-600" },
+  "其他": { icon: Heart, color: "from-gray-500/10 to-slate-500/10 text-gray-600 dark:text-gray-300" },
 };
 
 const MOCK_ACHIEVEMENTS = [
@@ -87,7 +87,7 @@ export default function AchievementsPage() {
       <AnimatePresence>
         {showForm && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-            <Card className="shadow-sm border-dashed border-2 border-amber-300">
+            <Card className="shadow-sm border-dashed border-2 border-amber-300 dark:border-amber-700/50">
               <CardContent className="p-5">
                 <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
                   <Trophy className="h-4 w-4 text-amber-500" /> 记录新成果

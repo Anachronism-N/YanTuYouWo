@@ -198,7 +198,7 @@ export default function AboutPage() {
               <motion.div key={f.title} variants={fadeInUp}>
                 <Card className="shadow-sm h-full hover:shadow-md transition-all group hover:-translate-y-0.5">
                   <CardContent className="p-5">
-                    <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br mb-3", f.color)}>
+                    <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br mb-3 transition-transform group-hover:scale-110", f.color)}>
                       <Icon className="h-5 w-5" />
                     </div>
                     <h3 className="font-bold text-base mb-1.5">{f.title}</h3>

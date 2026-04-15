@@ -93,16 +93,41 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
                 <TrendingUp className="h-4 w-4 text-primary" /> 热门话题
               </h3>
               <div className="space-y-0.5">
-                {hotTags.map((tag, i) => (
-                  <Link key={tag.name} href={`/community?tag=${encodeURIComponent(tag.name)}`}
-                    className="flex items-center justify-between rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors">
-                    <span className="flex items-center gap-2">
-                      <span className={cn("text-xs font-bold w-4 shrink-0", i < 3 ? "text-orange-500" : "text-muted-foreground/50")}>{i + 1}</span>
-                      <span className="truncate"># {tag.name}</span>
+                {hotTags.map((tag, i) => {
+                  const rankColor = i === 0 ? "text-amber-500" : i === 1 ? "text-gray-400" : i === 2 ? "text-amber-700 dark:text-amber-600" : "text-muted-foreground/50";
+                  return (
+                    <Link key={tag.name} href={`/community?tag=${encodeURIComponent(tag.name)}`}
+                      className="flex items-center justify-between rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-primary/5 hover:text-foreground transition-all hover:translate-x-0.5">
+                      <span className="flex items-center gap-2">
+                        <span className={cn("text-xs font-bold w-4 shrink-0", rankColor)}>{i + 1}</span>
+                        <span className="truncate"># {tag.name}</span>
+                      </span>
+                      <span className="text-xs shrink-0 ml-2">{tag.count}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+              {/* 话题热度云 */}
+              <div className="mt-4 pt-4 border-t">
+                <h4 className="text-xs font-semibold text-muted-foreground mb-3">话题热度</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: "保研经验", size: "text-sm", weight: "font-semibold", color: "text-primary" },
+                    { label: "择校", size: "text-xs", weight: "font-medium", color: "text-blue-600 dark:text-blue-400" },
+                    { label: "面试", size: "text-base", weight: "font-bold", color: "text-primary" },
+                    { label: "导师", size: "text-xs", weight: "font-normal", color: "text-muted-foreground" },
+                    { label: "夏令营", size: "text-sm", weight: "font-semibold", color: "text-violet-600 dark:text-violet-400" },
+                    { label: "GPA", size: "text-xs", weight: "font-medium", color: "text-emerald-600 dark:text-emerald-400" },
+                    { label: "简历", size: "text-sm", weight: "font-medium", color: "text-amber-600 dark:text-amber-400" },
+                    { label: "预推免", size: "text-base", weight: "font-bold", color: "text-rose-600 dark:text-rose-400" },
+                    { label: "英语", size: "text-xs", weight: "font-normal", color: "text-muted-foreground" },
+                    { label: "科研", size: "text-sm", weight: "font-semibold", color: "text-cyan-600 dark:text-cyan-400" },
+                  ].map((t) => (
+                    <span key={t.label} className={`${t.size} ${t.weight} ${t.color} hover:opacity-70 cursor-pointer transition-opacity`}>
+                      {t.label}
                     </span>
-                    <span className="text-xs shrink-0 ml-2">{tag.count}</span>
-                  </Link>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
 

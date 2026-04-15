@@ -71,3 +71,5 @@ backend/htmlcov/
 crawl/data/*.log
 crawl/data/*.json
 爬虫开发_2026-04-01_01-05-30.json
+前端开发进度记录_*.json
+文档转换与优化需求_*.json

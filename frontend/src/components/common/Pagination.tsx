@@ -65,7 +65,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
           return (
             <span
               key={`ellipsis-${index}`}
-              className="flex h-9 w-9 items-center justify-center text-muted-foreground"
+              className="flex h-9 w-9 items-center justify-center text-muted-foreground pointer-events-none cursor-default"
+              aria-hidden="true"
             >
               <MoreHorizontal className="h-4 w-4" />
             </span>

@@ -137,9 +137,9 @@ function PlanForm({ onSubmit }: { onSubmit: (input: PlanInput) => void }) {
     <div>
       <label className="text-sm font-medium mb-1.5 block">{label}</label>
       <div className="flex items-center gap-3">
-        <button onClick={() => onChange(Math.max(0, value - 1))} className="flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"><Minus className="h-4 w-4" /></button>
+        <button onClick={() => onChange(Math.max(0, value - 1))} className="flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:outline-none"><Minus className="h-4 w-4" /></button>
         <span className="text-lg font-bold w-8 text-center">{value}</span>
-        <button onClick={() => onChange(value + 1)} className="flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"><Plus className="h-4 w-4" /></button>
+        <button onClick={() => onChange(value + 1)} className="flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:outline-none"><Plus className="h-4 w-4" /></button>
       </div>
     </div>
   );
@@ -161,7 +161,7 @@ function PlanForm({ onSubmit }: { onSubmit: (input: PlanInput) => void }) {
             </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">GPA 排名</label>
-              <select value={input.gpa_rank} onChange={(e) => update("gpa_rank", e.target.value)} className="w-full h-10 rounded-lg border bg-background px-3 text-sm">
+              <select value={input.gpa_rank} onChange={(e) => update("gpa_rank", e.target.value)} className="w-full h-10 rounded-lg border bg-background px-3 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none">
                 {["前 1%", "前 5%", "前 10%", "前 20%", "前 30%", "前 50%", "50% 以后"].map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
@@ -169,7 +169,7 @@ function PlanForm({ onSubmit }: { onSubmit: (input: PlanInput) => void }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-1.5 block">目标院校层次</label>
-              <select value={input.target_level} onChange={(e) => update("target_level", e.target.value)} className="w-full h-10 rounded-lg border bg-background px-3 text-sm">
+              <select value={input.target_level} onChange={(e) => update("target_level", e.target.value)} className="w-full h-10 rounded-lg border bg-background px-3 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none">
                 {LEVEL_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
@@ -648,11 +648,11 @@ function PlanResultView({ result, onRetry }: { result: PlanResult; onRetry: () =
 
       {/* 视图切换 + 操作按钮 */}
       <div className="flex items-center justify-between">
-        <div className="inline-flex rounded-xl bg-muted/50 p-1 gap-1">
+        <div className="inline-flex rounded-xl bg-muted/50 backdrop-blur-sm shadow-sm p-1 gap-1">
           {VIEW_MODES.map((m) => (
             <button key={m.id} onClick={() => setViewMode(m.id)}
               className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
-                viewMode === m.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                viewMode === m.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-background/50")}>
               {m.icon} {m.label}
             </button>
           ))}
@@ -737,11 +737,11 @@ export default function PlanPage() {
       {/* 顶部 Tab */}
       {phase !== "generating" && (
         <div className="flex justify-center mb-6">
-          <div className="inline-flex rounded-xl bg-muted/50 p-1 gap-1">
+          <div className="inline-flex rounded-xl bg-muted/50 backdrop-blur-sm shadow-sm p-1 gap-1">
             {PLAN_TABS.map((tab) => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={cn("flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
-                  activeTab === tab.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                  activeTab === tab.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-background/50")}>
                 <tab.icon className="h-4 w-4" /> {tab.label}
               </button>
             ))}

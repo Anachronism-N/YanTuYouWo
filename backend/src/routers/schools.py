@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
-from src.schemas.school import SchoolItem, SchoolDetail, SchoolListResponse, DepartmentItem
+from src.schemas.school import SchoolDetail, SchoolListResponse, DepartmentItem
 from src.schemas.notice import NoticeListResponse
 from src.services import school_service, notice_service
 

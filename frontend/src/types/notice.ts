@@ -1,12 +1,25 @@
 /** 通知类型 */
-export type NoticeType = "summer_camp" | "pre_admission" | "seminar" | "admission_list" | "all";
+export type NoticeType =
+  | "summer_camp"
+  | "pre_admission"
+  | "admission_guide"
+  | "admission_list"
+  | "offer_list"
+  | "direct_phd"
+  | "combined_degree"
+  | "seminar"
+  | "all";
 
 /** 通知类型中文映射 */
 export const NOTICE_TYPE_LABELS: Record<string, string> = {
   summer_camp: "夏令营",
   pre_admission: "预推免",
-  seminar: "宣讲会",
+  admission_guide: "招生简章",
   admission_list: "入营名单",
+  offer_list: "拟录取",
+  direct_phd: "直博",
+  combined_degree: "硕博连读",
+  seminar: "招生宣讲",
 };
 
 /** 通知状态 */

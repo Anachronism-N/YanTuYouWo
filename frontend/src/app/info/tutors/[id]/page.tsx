@@ -107,8 +107,8 @@ export default function TutorDetailPage({
                   <Badge
                     className={`mt-2 ${
                       tutor.is_recruiting
-                        ? "border-green-200 bg-green-50 text-green-700"
-                        : "border-gray-200 bg-gray-50 text-gray-500"
+                        ? "border-green-200 bg-green-50 text-green-700 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-400"
+                        : "border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-500/30 dark:bg-gray-500/10 dark:text-gray-400"
                     }`}
                     variant="outline"
                   >
@@ -219,11 +219,25 @@ export default function TutorDetailPage({
                   研究方向
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {tutor.research_areas.map((area) => (
-                    <Badge key={area} variant="secondary">
-                      {area}
-                    </Badge>
-                  ))}
+                  {tutor.research_areas.map((area, i) => {
+                    const colorSets = [
+                      "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30",
+                      "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-500/15 dark:text-violet-300 dark:border-violet-500/30",
+                      "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
+                      "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30",
+                      "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30",
+                      "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/30",
+                    ];
+                    return (
+                      <Badge
+                        key={area}
+                        variant="outline"
+                        className={`text-sm px-3 py-1 font-medium border ${colorSets[i % colorSets.length]} transition-transform hover:scale-105`}
+                      >
+                        {area}
+                      </Badge>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
