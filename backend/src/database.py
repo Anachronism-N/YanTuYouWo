@@ -16,9 +16,13 @@ def _create_engine():
     if url.startswith("sqlite"):
         connect_args["check_same_thread"] = False
     else:
-        kwargs["pool_size"] = 10
-        kwargs["max_overflow"] = 20
-        kwargs["pool_recycle"] = 3600
+        kwargs["pool_size"] = 5
+        kwargs["max_overflow"] = 10
+        kwargs["pool_recycle"] = 1800
+        kwargs["pool_pre_ping"] = True
+        # Supabase / 云 PostgreSQL 要求 SSL
+        if "supabase.co" in url or "supabase.com" in url or "sslmode=require" in url:
+            connect_args["ssl"] = "require"
 
     eng = create_async_engine(
         url,
