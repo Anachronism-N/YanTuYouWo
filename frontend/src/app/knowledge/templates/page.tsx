@@ -117,10 +117,10 @@ export default function TemplatesPage() {
             <motion.div key={tpl.id}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}>
-              <Card className="shadow-sm hover:shadow-lg transition-all group cursor-pointer h-full">
+              <Card className="shadow-sm hover:shadow-lg transition-all group cursor-pointer h-full hover:border-primary/20">
                 <CardContent className="p-5">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted/50">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-500/10 dark:to-teal-500/5">
                       {formatIcon(tpl.format)}
                     </div>
                     <div className="flex-1 min-w-0">

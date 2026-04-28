@@ -121,7 +121,7 @@ export default function ExperiencesPage() {
             <motion.div key={exp.id}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }}>
-              <Card className="shadow-sm hover:shadow-md transition-all group cursor-pointer">
+              <Card className="shadow-sm hover:shadow-md transition-all group cursor-pointer hover:border-rose-200/50 dark:hover:border-rose-500/20 hover:-translate-y-0.5">
                 <CardContent className="p-5">
                   <div className="flex items-start gap-4">
                     {/* 作者头像 */}

@@ -35,6 +35,14 @@ export const NOTICE_STATUS_OPTIONS = [
   { value: "ended", label: "已结束" },
 ] as const;
 
+/** 信息来源选项 */
+export const SOURCE_TYPE_OPTIONS = [
+  { value: "all", label: "全部来源" },
+  { value: "department", label: "学院官网" },
+  { value: "graduate_school", label: "研究生院" },
+  { value: "wechat", label: "公众号" },
+] as const;
+
 /** 排序选项 */
 export const NOTICE_SORT_OPTIONS = [
   { value: "latest", label: "最新发布" },

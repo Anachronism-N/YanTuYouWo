@@ -3,7 +3,7 @@
 > 基础地址：`http://localhost:8000/api`
 > Swagger UI：http://localhost:8000/api/docs
 > ReDoc：http://localhost:8000/api/redoc
-> 版本：1.1.0 | 端点总数：67 | 测试：281 项
+> 版本：1.3.0（生产就绪）| 端点总数：77 | 测试：298 项
 
 ---
 
@@ -34,7 +34,7 @@
 - [20. AI — 心理 (2)](#20-ai--心理)
 - [21. AI — 规划 (1)](#21-ai--规划)
 - [22. 语音 (5)](#22-语音)
-- [23. 管理员 (6)](#23-管理员)
+- [23. 管理员 (12)](#23-管理员)
 - [演示数据](#演示数据)
 
 ---
@@ -232,23 +232,162 @@ type 必须为 notice / school / tutor
 
 ## 7. 导师
 
+> 数据来源：`crawl/scripts/run_faculty_discovery.py` + `run_tutor_crawl.py` + `run_tutor_profile.py` + `run_tutor_enrich.py` 四阶段爬取（详见 `docs/crawl/tutor_crawler.md`）。所有导师按 `crawl_tier` 分级展示：
+> - **tier1**：完整画像（含 LLM 提取的简介/教育/工作/论文/项目/获奖/招生要求）
+> - **tier2**：基础卡片（姓名/职称/方向/邮箱/主页 URL/头像）
+> - **tier3**：仅外链占位（仅有姓名 + 学校 + 院系）
+
 ### `GET /api/tutors` — 导师列表
 无需认证 | 参数：
 
-| 参数 | 说明 |
-|------|------|
-| university | 学校名 |
-| discipline | 学科门类（工学/理学/经济学...） |
-| keyword | 关键词搜索 |
-| is_recruiting | 是否招生（true/false） |
-| province | 省份 |
-| sort | 排序（name/paper_count/view_count） |
-| page, size | 分页 |
+| 参数 | 说明 | 取值 |
+|------|------|------|
+| `university` | 学校名（模糊匹配） | 如 `北京大学`、`武汉大学` |
+| `department` | 学院名（模糊匹配） | 如 `计算机`、`人工智能学院` |
+| `discipline` | 学科门类 | `工学` / `理学` / `经济学` 等 |
+| `keyword` | 综合关键词（姓名/学校/学院/职称/研究方向） | 任意字符串 |
+| `research_area` | 研究方向（JSON 模糊匹配） | 如 `计算机视觉`、`大模型` |
+| `is_recruiting` | 是否招生 | `true` / `false` |
+| `province` | 省份 | 如 `北京`、`上海` |
+| `crawl_tier` | 数据完整度分级 | `tier1` / `tier2` / `tier3` |
+| `has_h_index` | 是否有 OpenAlex h-index | `true`（仅返回有学术指标的） |
+| `sort` | 排序 | `completeness`（默认，tier1 优先 + 完整度）/ `paper_count` / `view_count` / `citation_count` / `h_index` / `name` |
+| `page`, `size` | 分页 | 默认 1, 20 |
 
-> 当前数据库无导师数据时自动返回 6 位 Mock 导师，爬取导师数据后自动切换为真实数据。
+#### 响应字段（TutorItem）
+
+```json
+{
+  "total": 568,
+  "items": [{
+    "id": 292,
+    "name": "王睿杰",
+    "university_name": "北京航空航天大学",
+    "department_name": "计算机学院",
+    "school_level": "985",
+    "title": "教授",
+    "research_areas": ["可信高效人工智能", "多模态基础模型"],
+    "homepage_url": "http://scse.buaa.edu.cn/info/1546/12281.htm",
+    "email": "ruijiew@buaa.edu.cn",
+    "avatar_url": "http://scse.buaa.edu.cn/__local/...jpg",
+    "province": "北京",
+    "city": "",
+    "discipline": "未知",
+    "is_recruiting": true,
+    "recruiting_info": "长期招收对人工智能...感兴趣的同学",
+    "paper_count": 6,
+    "project_count": 3,
+    "view_count": 0,
+    "h_index": null,
+    "citation_count": null,
+    "crawl_tier": "tier1",
+    "profile_completeness": 100
+  }]
+}
+```
+
+`tier` 是动态推算的（基于 `biography`/`publications`/`projects` 是否为空 + `homepage_url` 是否存在），即使数据库中字段不一致也能保证返回正确的 tier。
+
+### `GET /api/tutors/stats` — 导师库统计概览
+
+```json
+{
+  "total": 568,
+  "tier_distribution": {"tier1": 105, "tier2": 463},
+  "data_quality": {
+    "with_email": 142,
+    "with_avatar": 202,
+    "with_h_index": 286,
+    "with_biography": 69
+  },
+  "universities": [
+    {"name": "武汉大学", "count": 156},
+    {"name": "北京理工大学", "count": 140}
+  ],
+  "provinces": [{"name": "北京", "count": 217}],
+  "disciplines": [{"name": "工学", "count": 100}]
+}
+```
+
+用于前端动态填充筛选下拉菜单和列表页顶部的概览条。
 
 ### `GET /api/tutors/{id}` — 导师详情
-含 biography, education, experience, publications, projects, awards 等
+
+返回 `TutorDetail`：包含列表项的全部字段 + 详细内容字段。
+
+#### 基础内容字段（B2 LLM 抽取）
+
+| 字段 | 说明 | 类型 |
+|------|------|------|
+| `biography` | 个人简介（LLM 提炼，100-300 字） | string |
+| `education` | 教育经历 | `[{year, degree, school, major}]` |
+| `experience` | 工作经历 | `[{year, title, organization}]` |
+| `publications` | 教师主页抽取的代表论文 | `[{title, venue, authors, year, citations?}]` |
+| `projects` | 科研项目 | `[{title, funder, role, year}]` |
+| `awards` | 获奖情况 | `string[]` |
+| `recruiting_info` | 招生方向描述 | string |
+| `recruiting_requirements` | 招生要求 | string |
+| `phone`, `office_address` | 联系方式 | string |
+
+#### **AMiner 级深度学术数据（C 阶段 OpenAlex 抽取）**
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| `h_index`, `i10_index`, `citation_count` | 学术指标 | `{h:80, i10:516, cites:34509}` |
+| `papers` | **完整论文列表**（最多 50 篇，按被引数倒序）每篇含 title/venue/authors/year/**citations**/**abstract**/doi/url/type | `[{...50 项}]` |
+| `coauthors` | **主要合作者**（按合作次数倒序，最多 20 位） | `[{name, openalex_id, works_together_count, last_year}]` |
+| `topics` | **研究主题分布**（OpenAlex 自动分类，含论文计数） | `[{name:"Video Coding", kind:"topic", works_count:336, subfield:"Signal Processing"}]` |
+| `yearly_stats` | **年度发文 + 引用趋势** | `[{year:2024, works_count:5, cited_by_count:120}]` |
+
+#### 元数据
+
+| 字段 | 说明 |
+|------|------|
+| `source_url` | 数据来源 URL |
+| `crawl_source` | 爬取来源：`official` / `openalex` / `aminer` / `manual` |
+| `external_ids` | 外部 ID `{openalex_id, aminer_id?, dblp_pid?, orcid?}` |
+| `last_crawled_at` | 最近爬取时间（ISO 8601） |
+
+#### 渲染策略
+
+- `crawl_tier=tier1`：完整画像 + 学术指标条 + 论文列表（按引用/年份分组）+ 合作者网络 + 研究主题图 + 年度趋势
+- `crawl_tier=tier2`：基础卡片 + 主页跳转大按钮（OpenAlex 数据可选展示）
+- `crawl_tier=tier3`：占位 + 院校师资页跳转
+
+#### 示例：黄永刚（北京理工大学，h=154）
+
+```json
+{
+  "name": "黄永刚",
+  "h_index": 154,
+  "i10_index": 478,
+  "citation_count": 93578,
+  "papers": [
+    {
+      "title": "Materials and Mechanics for Stretchable Electronics",
+      "venue": "Science",
+      "year": 2010,
+      "citations": 4845,
+      "abstract": "...",
+      "doi": "10.1126/...",
+      "type": "article"
+    },
+    /* ... 49 more papers ... */
+  ],
+  "coauthors": [
+    {"name": "John A. Rogers", "works_together_count": 27, "last_year": 2024},
+    /* ... 19 more ... */
+  ],
+  "topics": [
+    {"name": "Advanced Sensor and Energy Harvesting Materials", "kind": "topic", "works_count": 313},
+    {"name": "Advanced Materials and Mechanics", "kind": "topic", "works_count": 150}
+  ],
+  "yearly_stats": [
+    {"year": 2024, "works_count": 5, "cited_by_count": 458},
+    {"year": 2023, "works_count": 3, "cited_by_count": 2226}
+  ]
+}
+```
 
 ---
 
@@ -604,9 +743,39 @@ data: [DONE]
 
 ---
 
-## 23. 管理员
+## 23. 管理员 (12 个端点)
 
 > 所有 `/api/admin/*` 需要 role=admin，普通用户返回 403
+
+### `GET /api/admin/dashboard` — 仪表盘
+```json
+{
+  "stats": {"user_count": 5, "post_count": 6, "notice_count": 711, "school_count": 39, "new_users_week": 2, "new_posts_week": 1},
+  "recent_users": [{"id": 1, "username": "...", "nickname": "...", "created_at": "..."}],
+  "recent_posts": [{"id": 1, "title": "...", "author": "...", "category": "...", "created_at": "..."}]
+}
+```
+
+### `GET /api/admin/analytics` — 数据统计
+```json
+{
+  "content": {"notices": 711, "schools": 39, "departments": 1593, "posts": 6, "checkins": 23, "interviews": 1},
+  "users": {"total": 5},
+  "post_by_category": {"经验分享": 2, "择校咨询": 2, "资料分享": 1},
+  "notice_by_type": {"夏令营": 200, "预推免": 150, "其他": 361}
+}
+```
+
+### `GET /api/admin/notices` — 通知管理列表
+参数：`?status=pending&page=1&size=20`
+
+### `PUT /api/admin/notices/{id}/status` — 更新通知审核状态
+`{"status": "published"}` — pending/published/rejected
+
+### `GET /api/admin/posts` — 帖子管理列表
+
+### `PUT /api/admin/users/{id}/disable` — 禁用/启用用户
+返回 `{"detail": "用户已禁用", "role": "disabled"}`
 
 ### `GET /api/admin/users` — 用户列表
 参数：`?keyword=张&page=1&size=20`

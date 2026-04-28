@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar, Eye, Star, PlayCircle, ChevronRight, ExternalLink, Clock,
+  Globe, MessageCircle, Building2,
 } from "lucide-react";
 import CountdownBadge from "./CountdownBadge";
 import type { NoticeItem, NoticeStatus } from "@/types/notice";
@@ -24,7 +25,24 @@ const typeColors: Record<string, string> = {
   "入营名单": "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30",
   "拟录取": "bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/30",
   "宣讲会": "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30",
+  "招生宣讲": "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30",
+  "直博": "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/30",
+  "硕博连读": "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/30",
   "科学营": "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/30",
+};
+
+const sourceTypeIcon: Record<string, React.ReactNode> = {
+  department: <Building2 className="h-3 w-3" />,
+  graduate_school: <Globe className="h-3 w-3" />,
+  wechat: <MessageCircle className="h-3 w-3" />,
+  unknown: <Globe className="h-3 w-3" />,
+};
+
+const sourceTypeColors: Record<string, string> = {
+  department: "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:text-slate-300 dark:border-slate-500/30",
+  graduate_school: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/30",
+  wechat: "bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/30",
+  unknown: "bg-gray-50 text-gray-600 border-gray-200",
 };
 
 export default function InfoCard({ notice }: InfoCardProps) {
@@ -87,8 +105,17 @@ export default function InfoCard({ notice }: InfoCardProps) {
 
           {/* 标签行 */}
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            {notice.tags.map((tag) => (
-              <Badge key={tag} variant="outline" className={`text-xs font-normal ${typeColors[tag] || ""}`}>
+            {notice.source_type_key && (
+              <Badge
+                variant="outline"
+                className={`text-xs font-normal rounded-full inline-flex items-center gap-1 ${sourceTypeColors[notice.source_type_key] || sourceTypeColors.unknown}`}
+              >
+                {sourceTypeIcon[notice.source_type_key] || sourceTypeIcon.unknown}
+                {notice.source_type || "学院官网"}
+              </Badge>
+            )}
+            {notice.tags.filter((tag) => tag !== notice.source_type).map((tag) => (
+              <Badge key={tag} variant="outline" className={`text-xs font-normal rounded-full ${typeColors[tag] || ""}`}>
                 {tag}
               </Badge>
             ))}
@@ -114,14 +141,16 @@ export default function InfoCard({ notice }: InfoCardProps) {
         </div>
 
         {/* 右侧状态区 */}
-        <div className="flex flex-col items-center justify-between w-[100px] shrink-0 border-l bg-muted/5">
+        <div className="flex flex-col items-center justify-between w-[110px] shrink-0 border-l bg-muted/5">
           <div className={`flex items-center justify-center gap-1 px-3 py-2.5 text-sm font-semibold bg-gradient-to-r ${statusInfo.gradient} ${statusInfo.textColor} w-full`}>
             <span className="text-xs">●</span>
             <span>{statusInfo.label}</span>
           </div>
           {notice.registration_end && notice.status === "registering" && (
             <div className="flex-1 flex items-center justify-center px-2">
-              <CountdownBadge deadline={notice.registration_end} compact />
+              <div className="rounded-lg bg-background/80 border border-border/50 p-2 shadow-sm">
+                <CountdownBadge deadline={notice.registration_end} compact />
+              </div>
             </div>
           )}
           {(notice.status !== "registering" || !notice.registration_end) && (

@@ -73,14 +73,12 @@ export default function AppFooter() {
             © {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/about"
               className="text-muted-foreground transition-colors hover:text-foreground"
             >
               <Globe className="h-4 w-4" />
-            </a>
+            </Link>
           </div>
         </div>
       </div>

@@ -30,6 +30,8 @@ class NoticeItem(BaseModel):
     view_count: int = 0
     intent_count: int = 0
     application_rule: str = "未知"
+    source_type: str = "学院官网"
+    source_type_key: str = "department"
 
     model_config = {"from_attributes": True}
 
@@ -74,6 +76,7 @@ class NoticeQueryParams(BaseModel):
     major: str | None = None
     status: str | None = None
     keyword: str | None = None
+    source_type: str | None = None
     sort: str = "latest"
     page: int = 1
     size: int = 20

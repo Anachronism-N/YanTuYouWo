@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from src.config import get_settings
 from src.database import engine
@@ -19,9 +20,12 @@ from src.routers import ai
 from src.routers import voice as voice_router
 from src.routers import admin
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.4.0"
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 logger = logging.getLogger("yantu")
 
 settings = get_settings()
@@ -29,10 +33,23 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期：启动时自动创建新增的表"""
+    """应用生命周期"""
+    # 启动检查
+    settings.validate_production()
+
+    # 建表
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    logger.info(f"研途有我 API v{APP_VERSION} 启动完成")
+
+    # 验证 DB 连通性
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        logger.info(f"研途有我 API v{APP_VERSION} 启动完成 (DB: OK, Debug: {settings.DEBUG})")
+    except Exception as e:
+        logger.error(f"数据库连接失败: {e}")
+        raise
+
     yield
     logger.info("研途有我 API 已关闭")
 
@@ -41,9 +58,9 @@ app = FastAPI(
     title="研途有我 API",
     description="研途有我 — 一站式保研信息聚合平台后端 API",
     version=APP_VERSION,
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json",
+    docs_url="/api/docs" if settings.DEBUG else None,
+    redoc_url="/api/redoc" if settings.DEBUG else None,
+    openapi_url="/api/openapi.json" if settings.DEBUG else None,
     lifespan=lifespan,
 )
 
@@ -77,7 +94,7 @@ async def security_and_timing_middleware(request: Request, call_next):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """全局异常兜底：防止未处理异常泄露堆栈到前端"""
+    """全局异常兜底"""
     logger.error(f"未处理异常: {request.method} {request.url.path} → {type(exc).__name__}: {exc}")
     return JSONResponse(status_code=500, content={"detail": "服务器内部错误，请稍后再试"})
 
@@ -110,5 +127,17 @@ app.include_router(admin.router, prefix="/api")
 
 @app.get("/api/health")
 async def health_check():
-    """健康检查"""
-    return {"status": "ok", "version": APP_VERSION}
+    """健康检查（含服务状态）"""
+    from src.services.llm import is_available as llm_ok
+    from src.services.voice import is_available as voice_ok
+
+    return {
+        "status": "ok",
+        "version": APP_VERSION,
+        "debug": settings.DEBUG,
+        "services": {
+            "database": "sqlite" if "sqlite" in settings.database_url else "postgresql",
+            "llm": "connected" if llm_ok() else "mock",
+            "tts": "connected" if voice_ok() else "unavailable",
+        },
+    }

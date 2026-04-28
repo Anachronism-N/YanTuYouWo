@@ -91,10 +91,19 @@ export default function AboutPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
       {/* ===== Hero ===== */}
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-20">
-        <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/10 to-violet-500/10 mb-6 shadow-lg shadow-primary/10">
-          <GraduationCap className="h-10 w-10 text-primary" />
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="relative text-center mb-20">
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[400px] pointer-events-none">
+          <div className="absolute top-0 left-0 h-48 w-48 rounded-full bg-primary/8 blur-3xl" />
+          <div className="absolute top-10 right-0 h-56 w-56 rounded-full bg-violet-500/8 blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-cyan-500/8 blur-3xl" />
         </div>
+        <motion.div
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/10 to-violet-500/10 mb-6 shadow-lg shadow-primary/10"
+        >
+          <GraduationCap className="h-10 w-10 text-primary" />
+        </motion.div>
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl mb-4">
           研途有我
         </h1>

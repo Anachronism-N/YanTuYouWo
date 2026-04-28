@@ -375,6 +375,15 @@ def _parse_int(value) -> Optional[int]:
 
 def _clean_title(title: str) -> str:
     """清洗标题：移除前缀日期和其他噪音"""
+    # Remove newlines/tabs first
+    title = re.sub(r"[\n\r\t]+", " ", title)
+    title = re.sub(r"\s{2,}", " ", title)
+    # "18:27:09国防科技大学..." → 移除时间戳前缀
+    title = re.sub(r"^\d{2}:\d{2}:\d{2}", "", title)
+    # Remove leading bullets/dots
+    title = re.sub(r"^[·•▪►◆※►]+\s*", "", title)
+    # "12-16吉林大学..." or "09-112024清华大学..." → 移除前缀
+    title = re.sub(r"^\d{2}-\d{2,6}", "", title)
     # "132026.03清华大学..." → "清华大学..."
     title = re.sub(r"^\d{1,4}(\d{4})[./]\d{1,2}", "", title)
     # "162025-06标题" → "标题"

@@ -21,6 +21,9 @@ import type {
   InterviewMessage, InterviewResult, InterviewMode,
   ResumeSource, QuestionBankItem,
 } from "@/types/ai-tools";
+import VoiceChat from "@/components/ai/VoiceChat";
+import { startInterview, endInterview } from "@/lib/api";
+import { toast } from "sonner";
 
 /* ================================================================
    Mock 数据
@@ -80,11 +83,12 @@ const genId = () => Math.random().toString(36).slice(2, 10);
    面试配置面板（增强版）
    ================================================================ */
 
-function ConfigPanel({ config, onChange, onStart, onSwitchTab }: {
+function ConfigPanel({ config, onChange, onStart, onSwitchTab, starting }: {
   config: InterviewConfig;
   onChange: (c: Partial<InterviewConfig>) => void;
   onStart: () => void;
   onSwitchTab: (tab: string) => void;
+  starting?: boolean;
 }) {
   const types: InterviewType[] = ["综合面试", "专业面试", "英语面试"];
   const difficulties: InterviewDifficulty[] = ["基础", "中等", "困难"];
@@ -106,36 +110,47 @@ function ConfigPanel({ config, onChange, onStart, onSwitchTab }: {
           <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500" />
           <CardContent className="p-6">
             <label className="text-sm font-semibold mb-3 block">面试模式</label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               <button onClick={() => onChange({ mode: "text" })}
-                className={cn("relative rounded-xl border-2 p-5 text-left transition-all",
+                className={cn("relative rounded-xl border-2 p-4 text-left transition-all",
                   config.mode === "text" ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-muted/30 hover:bg-muted/50")}>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                    <MessageSquare className="h-5 w-5" />
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                    <MessageSquare className="h-4.5 w-4.5" />
+                  </div>
+                  <p className="font-semibold text-sm">文字面试</p>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">通过文字问答，可以反复打磨回答内容</p>
+                {config.mode === "text" && <div className="absolute top-2.5 right-2.5"><CheckCircle2 className="h-4 w-4 text-primary" /></div>}
+              </button>
+              <button onClick={() => onChange({ mode: "voice" })}
+                className={cn("relative rounded-xl border-2 p-4 text-left transition-all",
+                  config.mode === "voice" ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-muted/30 hover:bg-muted/50")}>
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600">
+                    <Volume2 className="h-4.5 w-4.5" />
                   </div>
                   <div>
-                    <p className="font-semibold text-sm">文字面试</p>
-                    <p className="text-xs text-muted-foreground">通过文字进行问答</p>
+                    <p className="font-semibold text-sm">语音面试</p>
+                    <Badge className="text-xs bg-emerald-100 text-emerald-700 mt-0.5">已上线</Badge>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">适合练习回答思路和内容组织，可以反复修改</p>
-                {config.mode === "text" && <div className="absolute top-3 right-3"><CheckCircle2 className="h-5 w-5 text-primary" /></div>}
+                <p className="text-xs text-muted-foreground leading-relaxed">声波形象面试官，真实语音交互</p>
+                {config.mode === "voice" && <div className="absolute top-2.5 right-2.5"><CheckCircle2 className="h-4 w-4 text-primary" /></div>}
               </button>
               <button onClick={() => onChange({ mode: "video" })}
-                className={cn("relative rounded-xl border-2 p-5 text-left transition-all",
+                className={cn("relative rounded-xl border-2 p-4 text-left transition-all opacity-75",
                   config.mode === "video" ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-muted/30 hover:bg-muted/50")}>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
-                    <Video className="h-5 w-5" />
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                    <Video className="h-4.5 w-4.5" />
                   </div>
                   <div>
                     <p className="font-semibold text-sm">视频面试</p>
                     <Badge className="text-xs bg-amber-100 text-amber-700 mt-0.5">即将上线</Badge>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">数字人面试官 + 语音交互，模拟真实面试场景</p>
-                <div className="absolute top-3 right-3 text-xs text-muted-foreground">🔜 开发中</div>
+                <p className="text-xs text-muted-foreground leading-relaxed">数字人形象 + 唇形同步（开发中）</p>
               </button>
             </div>
           </CardContent>
@@ -199,7 +214,7 @@ function ConfigPanel({ config, onChange, onStart, onSwitchTab }: {
                 {types.map((t) => (
                   <button key={t} onClick={() => onChange({ type: t })}
                     className={cn("rounded-xl border-2 p-4 text-center transition-all",
-                      config.type === t ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-muted/30 hover:bg-muted/50")}>
+                      config.type === t ? "border-primary bg-primary/5 shadow-sm" : "border-border/40 bg-muted/30 hover:bg-muted/50")}>
                     <div className="text-2xl mb-1">{t === "综合面试" ? "💬" : t === "专业面试" ? "🔬" : "🌍"}</div>
                     <p className="font-medium text-sm">{t}</p>
                   </button>
@@ -214,7 +229,7 @@ function ConfigPanel({ config, onChange, onStart, onSwitchTab }: {
                   {difficulties.map((d) => (
                     <button key={d} onClick={() => onChange({ difficulty: d })}
                       className={cn("flex-1 rounded-xl border-2 py-2.5 text-sm font-medium transition-all",
-                        config.difficulty === d ? "border-primary bg-primary/5" : "border-transparent bg-muted/30 hover:bg-muted/50")}>
+                        config.difficulty === d ? "border-primary bg-primary/5" : "border-border/40 bg-muted/30 hover:bg-muted/50")}>
                       {d === "基础" ? "⭐" : d === "中等" ? "⭐⭐" : "⭐⭐⭐"} {d}
                     </button>
                   ))}
@@ -226,7 +241,7 @@ function ConfigPanel({ config, onChange, onStart, onSwitchTab }: {
                   {durations.map((d) => (
                     <button key={d} onClick={() => onChange({ duration: d })}
                       className={cn("flex-1 rounded-xl border-2 py-2.5 text-sm font-medium transition-all",
-                        config.duration === d ? "border-primary bg-primary/5" : "border-transparent bg-muted/30 hover:bg-muted/50")}>
+                        config.duration === d ? "border-primary bg-primary/5" : "border-border/40 bg-muted/30 hover:bg-muted/50")}>
                       {d}min
                     </button>
                   ))}
@@ -260,8 +275,16 @@ function ConfigPanel({ config, onChange, onStart, onSwitchTab }: {
           </CardContent>
         </Card>
 
-        <Button onClick={onStart} size="lg" className="w-full h-12 text-base gap-2" disabled={config.mode === "video"}>
-          <Play className="h-5 w-5" /> {config.mode === "video" ? "视频面试即将上线" : "开始面试"}
+        <Button onClick={onStart} size="lg" className="w-full h-12 text-base gap-2" disabled={config.mode === "video" || starting}>
+          {config.mode === "video" ? (
+            <>🔜 视频面试即将上线</>
+          ) : starting ? (
+            <>正在建立会话…</>
+          ) : config.mode === "voice" ? (
+            <><Volume2 className="h-5 w-5" /> 开始语音面试</>
+          ) : (
+            <><Play className="h-5 w-5" /> 开始面试</>
+          )}
         </Button>
       </div>
     </div>
@@ -804,7 +827,7 @@ function InterviewRoom({ config, onEnd }: {
           {config.resume_source !== "none" && <Badge className="text-xs bg-blue-100 text-blue-700"><FileText className="h-3 w-3 mr-0.5" /> 简历已加载</Badge>}
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Clock className="h-4 w-4" /> {formatTime(elapsed)}</div>
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Clock className="h-4 w-4" /> <span className="font-mono tabular-nums text-foreground font-semibold">{formatTime(elapsed)}</span></div>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><MessageSquare className="h-4 w-4" /> {questionIndex}/{questions.length}</div>
         </div>
       </div>
@@ -957,10 +980,71 @@ export default function InterviewPage() {
     target_school: "", target_major: "", duration: 15,
     realtime_feedback: true, resume_source: "none",
   });
+  const [voiceSessionId, setVoiceSessionId] = useState<string | null>(null);
+  const [voiceReport, setVoiceReport] = useState<InterviewResult | null>(null);
+  const [starting, setStarting] = useState(false);
 
-  const handleStart = () => setPhase("interview");
+  const handleStart = async () => {
+    if (config.mode !== "voice") {
+      setPhase("interview");
+      return;
+    }
+    // 语音面试：先调后端创建 session
+    setStarting(true);
+    try {
+      const typeMap: Record<InterviewType, string> = { "综合面试": "综合", "专业面试": "专业", "英语面试": "英语" };
+      const res = await startInterview({
+        type: typeMap[config.type],
+        difficulty: config.difficulty,
+        target_school: config.target_school || undefined,
+        target_major: config.target_major || undefined,
+        duration_minutes: config.duration,
+      });
+      setVoiceSessionId(String(res.session_id));
+      setPhase("interview");
+    } catch (err) {
+      console.error(err);
+      toast.error("开始语音面试失败，请先登录或检查网络");
+    } finally {
+      setStarting(false);
+    }
+  };
+
   const handleEnd = () => setPhase("result");
-  const handleRetry = () => setPhase("config");
+  const handleRetry = () => {
+    setVoiceSessionId(null);
+    setVoiceReport(null);
+    setPhase("config");
+  };
+
+  const handleVoiceExit = async () => {
+    if (!voiceSessionId) { setPhase("result"); return; }
+    try {
+      const rawReport = await endInterview(voiceSessionId);
+      // 把后端 report 结构映射为前端 InterviewResult
+      const dims = (rawReport.dimensions ?? {}) as Record<string, { score?: number; label?: string }>;
+      const mapped: InterviewResult = {
+        overall_score: Number(rawReport.total_score) || 0,
+        dimensions: Object.entries(dims).map(([, v]) => ({
+          name: v?.label ?? "",
+          score: Number(v?.score) || 0,
+          max_score: 100,
+          comment: "",
+        })),
+        strengths: (rawReport.strengths as string[]) ?? [],
+        improvements: (rawReport.improvements as string[]) ?? [],
+        summary: (rawReport.overall as string) ?? "",
+        recommended_questions: [],
+        duration: 0,
+        question_count: Number(rawReport.questions_count) || 0,
+      };
+      setVoiceReport(mapped);
+    } catch (err) {
+      console.error(err);
+      toast.error("获取评估报告失败，展示默认结果");
+    }
+    setPhase("result");
+  };
 
   return (
     <div>
@@ -982,17 +1066,27 @@ export default function InterviewPage() {
       <AnimatePresence mode="wait">
         {activeTab === "interview" && phase === "config" && (
           <motion.div key="config" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-            <ConfigPanel config={config} onChange={(c) => setConfig((p) => ({ ...p, ...c }))} onStart={handleStart} onSwitchTab={setActiveTab} />
+            <ConfigPanel config={config} onChange={(c) => setConfig((p) => ({ ...p, ...c }))} onStart={handleStart} onSwitchTab={setActiveTab} starting={starting} />
           </motion.div>
         )}
-        {activeTab === "interview" && phase === "interview" && (
+        {activeTab === "interview" && phase === "interview" && config.mode !== "voice" && (
           <motion.div key="interview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
             <InterviewRoom config={config} onEnd={handleEnd} />
           </motion.div>
         )}
+        {activeTab === "interview" && phase === "interview" && config.mode === "voice" && voiceSessionId && (
+          <motion.div key="voice-interview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <VoiceChat
+              mode={{ kind: "interview", sessionId: voiceSessionId, autoPlayFirstQuestion: true }}
+              title={`${config.type} · 语音模式`}
+              subtitle={`${config.difficulty}难度 · ${config.target_school || "通用院校"} ${config.target_major || ""}`.trim()}
+              onExit={handleVoiceExit}
+            />
+          </motion.div>
+        )}
         {activeTab === "interview" && phase === "result" && (
           <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-            <ResultPanel result={MOCK_RESULT} onRetry={handleRetry} />
+            <ResultPanel result={voiceReport ?? MOCK_RESULT} onRetry={handleRetry} />
           </motion.div>
         )}
         {activeTab === "question-bank" && (

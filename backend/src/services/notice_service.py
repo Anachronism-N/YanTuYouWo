@@ -64,6 +64,25 @@ def _compute_notice_status(notice: AdmissionNotice) -> str:
     return "registering"
 
 
+def _derive_source_type(url: str) -> tuple[str, str]:
+    """根据信息源URL推断帖子来源类型，返回 (中文标签, key)"""
+    if not url:
+        return ("未知", "unknown")
+    url_lower = url.lower()
+    if "mp.weixin.qq.com" in url_lower or "weixin" in url_lower:
+        return ("公众号", "wechat")
+    # 研究生院/招办 子域名（学校级招生入口）
+    grad_subdomains = ("gs.", "yjs.", "yzb.", "graduate.", "yz.", "yanzhao.", "grad.", "grs.", "yjsy.", "yjszs.", "yzxc.")
+    try:
+        from urllib.parse import urlparse
+        host = urlparse(url).hostname or ""
+        if any(host.startswith(s) for s in grad_subdomains):
+            return ("研究生院", "graduate_school")
+    except Exception:
+        pass
+    return ("学院官网", "department")
+
+
 def _notice_to_item(notice: AdmissionNotice, university: University, department: Department | None) -> NoticeItem:
     """将数据库模型转换为前端 NoticeItem"""
     program_type = notice.program_type or "其他"
@@ -107,6 +126,10 @@ def _notice_to_item(notice: AdmissionNotice, university: University, department:
     if notice.target_degree and notice.target_degree != "硕博":
         tags.append(notice.target_degree)
 
+    source_type_label, source_type_key = _derive_source_type(notice.source_url or "")
+    if source_type_label not in tags and source_type_label != "未知":
+        tags.append(source_type_label)
+
     return NoticeItem(
         id=notice.id,
         title=clean_title,
@@ -131,6 +154,8 @@ def _notice_to_item(notice: AdmissionNotice, university: University, department:
         view_count=0,
         intent_count=0,
         application_rule="未知",
+        source_type=source_type_label,
+        source_type_key=source_type_key,
     )
 
 
@@ -145,13 +170,16 @@ def _notice_to_detail(notice: AdmissionNotice, university: University, departmen
 
     images = data_clean_service.clean_images(notice.images)
 
+    cleaned_content = data_clean_service.clean_raw_content(notice.raw_content or "")
+    markdown_content = data_clean_service.to_markdown(cleaned_content)
+
     return NoticeDetail(
         **item.model_dump(),
         requirements=requirements,
         registration_url=reg_url,
         official_url=notice.source_url,
         contact=contact,
-        raw_content=data_clean_service.clean_raw_content(notice.raw_content or ""),
+        raw_content=markdown_content,
         source_url=notice.source_url,
         images=images,
         created_at=notice.created_at.isoformat() if notice.created_at else "",
@@ -169,6 +197,7 @@ async def get_notices(
     discipline: str | None = None,
     keyword: str | None = None,
     status: str | None = None,
+    source_type: str | None = None,
     sort: str = "latest",
     page: int = 1,
     size: int = 20,
@@ -224,6 +253,9 @@ async def get_notices(
     if conditions:
         base_query = base_query.where(and_(*conditions))
 
+    # source_type filter: needs post-filtering since it's derived from URL
+    needs_source_filter = source_type and source_type != "all"
+
     # 排序
     if sort == "latest":
         base_query = base_query.order_by(desc(AdmissionNotice.publish_date), desc(AdmissionNotice.id))
@@ -232,12 +264,16 @@ async def get_notices(
     elif sort == "hot":
         base_query = base_query.order_by(desc(AdmissionNotice.id))
 
-    # 状态是根据日期计算的，需要先全量查出再内存过滤后分页
-    if status:
+    # 状态/来源是根据派生字段过滤的，需要先全量查出再内存过滤后分页
+    if status or needs_source_filter:
         all_result = await db.execute(base_query)
         all_rows = all_result.all()
         all_items = [_notice_to_item(notice, uni, dept) for notice, uni, dept in all_rows]
-        filtered = [item for item in all_items if item.status == status]
+        filtered = all_items
+        if status:
+            filtered = [item for item in filtered if item.status == status]
+        if needs_source_filter:
+            filtered = [item for item in filtered if item.source_type_key == source_type]
         total = len(filtered)
         offset = (page - 1) * size
         items = filtered[offset : offset + size]

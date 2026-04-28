@@ -16,6 +16,38 @@ const apiClient = axios.create({
   },
 });
 
+// Response interceptor for error handling
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      if (typeof window !== "undefined") {
+        const store = localStorage.getItem("yantu-user-store");
+        const skipRedirect = error.config?.headers?.["X-Skip-Auth-Redirect"] === "true";
+        if (store && !skipRedirect) {
+          localStorage.removeItem("yantu-user-store");
+          window.location.href = "/auth/login";
+        }
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
+// Request interceptor to add auth token
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    try {
+      const store = JSON.parse(localStorage.getItem("yantu-user-store") || "{}");
+      const token = store?.state?.token;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch {}
+  }
+  return config;
+});
+
 // ========== 通知相关 ==========
 
 /** 获取通知列表 */
@@ -94,6 +126,26 @@ export async function getTutors(params: TutorQueryParams): Promise<TutorListResp
 /** 获取导师详情 */
 export async function getTutorDetail(id: number): Promise<TutorDetail> {
   const { data } = await apiClient.get(`/tutors/${id}`);
+  return data;
+}
+
+/** 导师库统计概览 */
+export interface TutorStats {
+  total: number;
+  tier_distribution: Record<string, number>;
+  universities: { name: string; count: number }[];
+  provinces: { name: string; count: number }[];
+  disciplines: { name: string; count: number }[];
+  data_quality: {
+    with_email: number;
+    with_avatar: number;
+    with_h_index: number;
+    with_biography: number;
+  };
+}
+
+export async function getTutorStats(): Promise<TutorStats> {
+  const { data } = await apiClient.get(`/tutors/stats`);
   return data;
 }
 
@@ -232,6 +284,74 @@ export async function sendMentalMessage(topic: string, message: string): Promise
 /** 获取心理评估 */
 export async function getMentalAssessment(sessionId: string): Promise<Record<string, unknown>> {
   const { data } = await apiClient.get(`/ai/mental/assessment/${sessionId}`);
+  return data;
+}
+
+// ========== 语音 ==========
+
+export interface VoiceAnswerResponse {
+  transcribed_text: string;
+  reply_text: string;
+  feedback?: Record<string, unknown> | null;
+  has_audio: boolean;
+  reply_audio_base64: string | null;
+}
+
+const VOICE_HEADERS = { "X-Skip-Auth-Redirect": "true" };
+
+export interface TtsVoice {
+  id: string;
+  name: string;
+  gender: string;
+  style: string;
+  lang: string;
+  scene: string;
+}
+
+/** 获取可用 TTS 语音列表（无需登录） */
+export async function getAvailableVoices(): Promise<TtsVoice[]> {
+  const { data } = await apiClient.get(`/voice/voices`);
+  return data;
+}
+
+/** 语音心理对话（ASR → AI → TTS 一体） */
+export async function voiceMentalChat(audio: Blob, topic: string, voiceId?: string): Promise<VoiceAnswerResponse> {
+  const form = new FormData();
+  form.append("file", audio, "message.webm");
+  const params: Record<string, string> = { topic };
+  if (voiceId) params.voice_id = voiceId;
+  const { data } = await apiClient.post(`/voice/mental/voice-chat`, form, {
+    params,
+    headers: { "Content-Type": "multipart/form-data", ...VOICE_HEADERS },
+    timeout: 60000,
+  });
+  return data;
+}
+
+/** 语音面试首问（获取首题的 TTS 语音） */
+export async function voiceInterviewStart(sessionId: string, voiceId?: string): Promise<{ question: string; has_audio: boolean; audio_base64: string | null }> {
+  const { data } = await apiClient.post(`/voice/interview/${sessionId}/voice-start`, undefined, {
+    params: voiceId ? { voice_id: voiceId } : undefined,
+    headers: VOICE_HEADERS,
+  });
+  return data;
+}
+
+/** 语音面试回答 */
+export async function voiceInterviewAnswer(sessionId: string, audio: Blob, voiceId?: string): Promise<VoiceAnswerResponse> {
+  const form = new FormData();
+  form.append("file", audio, "answer.webm");
+  const { data } = await apiClient.post(`/voice/interview/${sessionId}/voice-answer`, form, {
+    params: voiceId ? { voice_id: voiceId } : undefined,
+    headers: { "Content-Type": "multipart/form-data", ...VOICE_HEADERS },
+    timeout: 60000,
+  });
+  return data;
+}
+
+/** 文本转语音（返回 audio/mpeg Blob） */
+export async function textToSpeech(text: string, voiceId?: string): Promise<Blob> {
+  const { data } = await apiClient.post(`/voice/tts`, { text, voice: voiceId ?? "FunAudioLLM/CosyVoice2-0.5B:alex" }, { responseType: "blob" });
   return data;
 }
 

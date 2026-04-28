@@ -188,7 +188,9 @@ export default function AppHeader() {
             className="h-9 w-9 md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            <span className={`inline-block transition-transform duration-200 ${mobileMenuOpen ? "rotate-90" : ""}`}>
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </span>
           </Button>
         </div>
       </div>

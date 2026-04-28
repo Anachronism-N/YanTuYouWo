@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, LayoutGrid, List } from "lucide-react";
+import { FileText, LayoutGrid, List, SearchX } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -245,12 +245,12 @@ function NoticesContent() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="py-20 text-center"
               >
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                  <span className="text-2xl">🔍</span>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-violet-500/10">
+                  <SearchX className="h-7 w-7 text-primary/60" />
                 </div>
-                <p className="text-lg font-medium text-muted-foreground">暂无符合条件的通知</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  试试调整筛选条件或搜索关键词
+                <p className="text-lg font-semibold">暂无符合条件的通知</p>
+                <p className="mt-2 text-sm text-muted-foreground max-w-xs mx-auto">
+                  试试调整筛选条件或搜索关键词，也可以清除所有筛选重新浏览
                 </p>
               </motion.div>
             )}

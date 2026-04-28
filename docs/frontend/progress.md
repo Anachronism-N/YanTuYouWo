@@ -1,6 +1,7 @@
 # 前端开发进度文档
 
-> 最后更新：2026-03-31 19:36
+> 最后更新：2026-04-28
+> 最新版本：导师库真实数据上线 + 三档 Tier 化渲染
 
 ---
 
@@ -1811,3 +1812,236 @@ frontend/
 | `src/lib/mock-data.ts` | Mock 用户添加 admin 角色 |
 | `src/app/ai/resume/page.tsx` | 模板美化 + 加粗支持 |
 | `docs/backend/design.md` | 新增 Phase 2.5 管理员 API 规划 |
+
+---
+
+## 2026-04-14 ~ 2026-04-28 持续优化汇总
+
+### 天气动态背景系统
+- 全面参考 web-weather 项目，实现 Canvas 2D 粒子系统（雨/雪/太阳/闪电/雾/冰雹/沙尘暴）
+- CSS CloudOverlay（3 层 PNG 云朵纹理 + Web Animations API）
+- CSS FogOverlay（烟雾纹理 + 径向渐变蒙版）
+- Open-Meteo API + 浏览器定位自动天气
+- 天气参数控制面板（按天气类型显示不同滑块/开关）
+- 6 种基础 CSS 背景（渐变/极光/波浪/星空/粒子/几何）全部重写
+
+### 简历工坊
+- 6 套视觉完全不同的模板（学术经典/现代双栏/专业商务/优雅学院/极简线条/LaTeX 学术）
+- 完整虚假简历数据（北邮→清华深研院）
+- `**加粗**` Markdown 语法支持
+- 步骤进度条 + 更宽松的触控间距
+
+### 管理后台（12 个页面完整实现）
+- 仪表盘 + 通知管理 + 院校管理 + 导师管理 + 竞赛管理 + 期刊管理
+- 社群管理 + 内容上传 + 数据统计（CSS 柱状图+进度条+词云）
+- API 文档浏览器（端点列表+Swagger UI+ReDoc iframe）
+- 系统通知 + 系统设置
+- 管理员角色权限保护
+
+### 新增功能页面
+- 竞赛信息 `/info/competitions`（10 项竞赛 + 含金量 + 保研加分说明）
+- 期刊会议 `/info/journals`（10 期刊 + 8 会议 + 本科生友好度）
+
+### 全局 UI 基础设施
+- Noto Sans SC 中文 webfont
+- 7 级 typography token（display→micro）
+- 语义色 token（success/warning/info）
+- NProgress 路由进度条
+- Sonner Toast 通知
+- ScrollToTop + 滚动进度条
+- ⌘K 全局搜索 Command 面板
+- 卡片底部品牌色光晕
+- 按钮 active:scale 反馈 + Badge hover 上浮
+
+### 可视化元素
+- 首页 CountUp 数字动画
+- 进度中心 SVG 环形图（总体进度 + 材料准备）
+- 院校详情 学院通知数量水平柱状图
+- 社群侧边栏 话题热度词云
+- 管理后台 CSS 柱状图 + 进度条 + 词云
+
+### 页面级美化
+- 所有页面统一 icon + title + subtitle 头部规范
+- InfoCard 重新设计（左侧指示条+右侧面板+时间信息+药丸标签+倒计时框架）
+- SchoolCard 重新设计（顶部渐变条+校徽 Logo+首字母头像+统计网格+箭头）
+- TutorCard 研究方向 6 色循环标签 + 头像 ring 光环
+- 导师详情 头像 shadow+ring 效果
+- 注册引导 动画步骤指示器（弹簧旋转勾号+进度条）
+- 知识库课程 5 星评分图标 + hover 上浮
+- 深色模式全面适配（CompactInfoCard/TutorCard/进度中心/社群树洞等）
+
+### 上线准备
+- 移除测试凭据 + API Token 自动注入 + 401 自动处理
+- SEO 元数据（OG/Twitter/robots/metadataBase）
+- 首页加载骨架
+- 修复占位 href="#" 链接
+- `.env.example` 文档
+- `docs/api-interfaces.md` 完整 API 接口清单（50+ 端点）
+- `docs/user-manual.md` 完整网页使用说明（786 行）
+- `docs/frontend/optimization-plan.md` 可视化元素计划
+
+### 当前页面统计
+- **56 个页面**编译零错误
+- **0 个 console.log** 残留
+- **0 个硬编码 localhost**
+- 深色模式全面适配
+
+
+---
+
+## 2026-04-28 更新 — 导师库真实数据 + Tier 化渲染（v2.0）
+
+### 1. 列表页（`/info/tutors`）— 全面重构
+
+之前：使用 `mockTutors`（12 位假数据）+ 3 种视图模式（按目标院校/按方向/全部），870+ 行复杂代码。
+
+现在：**直接接入 `getTutors()` API**（568 位真实导师），简化为单一视图 + 强筛选：
+
+| 改进 | 说明 |
+|------|------|
+| **接入真实数据** | `useEffect` 调用 `getTutors(params)`，全部为 SSR-friendly client component |
+| **统计概览条** | 顶部新增 `<Card>`，4 项指标（总收录 / 完整画像 / 含 h-index / 已覆盖院校），数据来自 `/api/tutors/stats` |
+| **动态学校下拉** | 从 stats.universities 自动填充（带数量计数），不再硬编码 |
+| **动态省份下拉** | 优先用 stats.provinces（带计数），fallback 到全省列表 |
+| **新增筛选维度** | `department`（学院模糊）/ `tier`（数据完整度）/ `has_h_index`（含学术指标）|
+| **新增排序** | `completeness`（默认）/ `h_index` / `citation_count` |
+| **关键词扩展** | 后端搜索覆盖姓名/学校/学院/职称/研究方向 |
+| **防抖搜索** | 输入 → 400ms 后触发，避免高频 API |
+
+### 2. 详情页（`/info/tutors/[id]`）— Tier 化三档模板
+
+之前：使用 `mockTutorDetail` + 单一固定布局。
+
+现在：**根据 `crawl_tier` 自动选择渲染模板**：
+
+#### Tier 1（完整画像，105 位）
+左侧 sticky 信息卡（头像 + 基本信息 + 联系方式 + 收藏/邮件按钮 + 研究方向）
+右侧主区：
+- **学术指标条**（h-指数 / 总被引 / 论文数 — 从 OpenAlex 拉取）
+- 个人简介（LLM 提炼，100-300 字）
+- **招生信息**（绿色高亮卡片，含「招生方向」+「招生要求」）
+- 代表性论文（LLM 提取的 publications 优先；fallback 到 OpenAlex `recent_papers`，并标注「来自 OpenAlex」）
+- 教育经历 / 工作经历（结构化 `[{year, school, major, degree}]` 渲染）
+- 科研项目（`[{title, funder, role, year}]`）
+- 获奖情况
+- 数据来源链接（OpenAlex profile + 学院师资页）
+
+#### Tier 2（基础卡片，463 位）
+单卡片居中布局，凸显「访问 XXX 教师个人主页」**大跳转按钮**。
+显示：姓名+职称+学校学院+研究方向标签+邮箱+收藏按钮。
+顶部蓝色提示框：「当前为基础信息卡片，完整内容请访问导师主页」。
+
+#### Tier 3（仅外链，0 位 — 全员有 homepage_url）
+未来覆盖到无主页的院系时启用。提供「访问院校师资页」+「AI 导师推荐」两个跳转入口。
+
+### 3. 新增组件
+
+| 组件 | 路径 | 说明 |
+|------|------|------|
+| `TutorAvatar` | `components/common/TutorAvatar.tsx` | 头像组件，处理 `null` / 加载失败 / fallback 到默认 User 图标，避免破图 |
+
+### 4. 类型定义增强（`types/tutor.ts`）
+
+```typescript
+export interface TutorItem {
+  // ... 已有字段
+  crawl_tier?: "tier1" | "tier2" | "tier3";
+  profile_completeness?: number;
+  h_index?: number | null;
+  citation_count?: number | null;
+}
+
+export interface TutorDetail extends TutorItem {
+  education: Array<EducationItem | string>;   // 兼容对象/字符串
+  experience: Array<ExperienceItem | string>;
+  publications: Array<PublicationItem | string>;
+  projects: Array<ProjectItem | string>;
+  recent_papers?: PublicationItem[];
+  external_ids?: TutorExternalIds | null;
+  // ...
+}
+```
+
+新增 4 个内嵌 interface：`EducationItem`/`ExperienceItem`/`PublicationItem`/`ProjectItem`。
+
+### 5. API 客户端扩展（`lib/api.ts`）
+
+```typescript
+export async function getTutorStats(): Promise<TutorStats>;
+```
+
+`TutorStats` 包含 `total` / `tier_distribution` / `universities` / `provinces` / `disciplines` / `data_quality`。
+
+### 6. TutorCard 组件升级
+
+- 新增 `<TierBadge>`：tier1=绿色「完整✦」 / tier2=蓝色「基础」 / tier3=灰色「外链」
+- 头像使用 `<TutorAvatar>`（破图安全）
+- 底部统计：有 h-index 时优先显示 `h{N}`（绿色），否则展示项目数
+- 研究方向限制 5 个 + 「+N」展示更多
+- Tier 3 卡片显示「详细信息待完善，可访问院校师资页查看」
+
+### 7. 文件变更清单
+
+| 文件 | 操作 | 行数 |
+|------|------|------|
+| `components/common/TutorAvatar.tsx` | 新增 | ~45 |
+| `components/common/TutorCard.tsx` | 重写 | ~155 |
+| `app/info/tutors/page.tsx` | 重写 | ~370（之前 870+）|
+| `app/info/tutors/[id]/page.tsx` | 重写 | ~600（三档模板）|
+| `types/tutor.ts` | 重写 | ~150 |
+| `lib/api.ts` | 增量 | +30 |
+
+### 8. 端到端验证
+
+后端运行在 `http://localhost:8000`，前端 `http://localhost:3000`：
+
+- `/info/tutors`：568 位真实导师，Tier1 优先排序，4 项概览指标显示
+- `/info/tutors/292`（王睿杰）：Tier 1 完整画像，含简介/方向/3 项目/1 获奖/招生信息
+- `/info/tutors/9`（中南大学刘锦）：Tier 2 简化卡片 + 主页跳转按钮
+- `/info/tutors/9999`：404 处理 + 「返回导师库」按钮
+- 筛选：`?university=武汉大学` → 156 位武大老师；`?has_h_index=true` → 286 位有学术指标的
+
+### 9. 待优化项
+
+- `next/image` 替换 `<img>` 启用图片优化（Avatar URL 来源多样，需配置 `next.config.js` 域名白名单）
+- 列表页对 stats 加 SWR 缓存（当前每次 mount 拉取）
+- 详情页 SSR 化（提升 SEO，但目前依赖 use(params) Client API）
+- AI 导师推荐页（`/ai/tutor-match`）也接入真实数据（当前还是 Mock）
+
+---
+
+## 2026-04-28 最终美化轮次
+
+### 页面级微细节打磨（8 个页面）
+
+| 页面 | 文件 | 改动 |
+|------|------|------|
+| 社群问答 | `community/qa/page.tsx` | 卡片 `hover:-translate-y-0.5` 上浮；元数据改为 `·` 点分隔 |
+| 社群资料 | `community/resources/page.tsx` | 图标按格式着色（PDF 红/DOC 蓝/MP4 紫/在线绿）；卡片上浮 |
+| 社群树洞 | `community/confessions/page.tsx` | 卡片 hover 粉色边框 `border-pink-200/50` + 上浮 |
+| 信息差速递 | `knowledge/tips/page.tsx` | 标题 `text-sm` → `text-base font-semibold` |
+| 文书模板 | `knowledge/templates/page.tsx` | 图标改绿色渐变 `from-emerald-50 to-teal-50`；卡片 hover 边框 |
+| 经验精选 | `knowledge/experiences/page.tsx` | 卡片 hover 玫瑰色边框 + 上浮 |
+| 成果记录 | `progress/achievements/page.tsx` | 标题 `group-hover:text-primary`；左侧类型色彩条 `border-l-3` |
+| 学习打卡 | `progress/checkin/page.tsx` | 统计卡 hover 阴影+上浮；删除按钮始终可见（修复触屏） |
+
+### 全局细节修复
+
+| 项目 | 文件 | 改动 |
+|------|------|------|
+| "查看全部" hover | `page.tsx`（首页） | 添加 `hover:bg-primary/5 hover:text-primary hover:border-primary/30` |
+| 侧边栏宽度统一 | `knowledge/layout.tsx` | `w-52` → `w-56`（与社群一致） |
+| 汉堡菜单动画 | `AppHeader.tsx` | 图标切换添加 90° 旋转过渡 `transition-transform duration-200` |
+| VoiceOrb 类型 | `VoiceOrb.tsx` | `blinkAnim` 4 处 `animate` 添加 `as any` 类型断言 |
+
+### 累计项目规模
+
+| 指标 | 数值 |
+|------|------|
+| 编译页面数 | **56 个**（零错误） |
+| 管理后台页面 | 12 个（全部实现） |
+| 简历模板 | 6 套 |
+| 天气效果 | 10 种（含冰雹/沙尘暴） |
+| API 接口定义 | 50+ 个端点 |
+| 文档 | user-manual.md (786行) + api-interfaces.md + optimization-plan.md + progress.md |
+

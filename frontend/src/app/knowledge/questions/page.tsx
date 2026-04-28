@@ -329,7 +329,7 @@ export default function QuestionsPage() {
                       {q.reference_answer && (
                         <div className="mt-3">
                           <button onClick={() => setExpandedId(expandedId === q.id ? null : q.id)}
-                            className="flex items-center gap-1 text-xs text-primary hover:underline">
+                            className="flex items-center gap-1 text-xs text-primary rounded-lg px-3 py-1.5 hover:bg-muted/50 transition-colors">
                             <Lightbulb className="h-3 w-3" />
                             {expandedId === q.id ? "收起参考答案" : "查看参考答案"}
                             {expandedId === q.id ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}

@@ -58,9 +58,18 @@ async def speech_to_text(
 # 语音面试
 # ════════════════════════════════════════
 
+def _resolve_voice(custom: str | None, default: str) -> str:
+    """校验自定义 voice id 是否在白名单，否则回退到默认"""
+    if not custom:
+        return default
+    valid_ids = {v["id"] for v in voice.TTS_VOICES}
+    return custom if custom in valid_ids else default
+
+
 @router.post("/interview/{session_id}/voice-start")
 async def voice_interview_start(
     session_id: int,
+    voice_id: str | None = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -82,7 +91,8 @@ async def voice_interview_start(
     if session.messages:
         first_q = session.messages[0].get("content", "")
 
-    audio = await voice.text_to_speech(first_q, voice=voice.INTERVIEW_VOICE) if first_q else None
+    voice_to_use = _resolve_voice(voice_id, voice.INTERVIEW_VOICE)
+    audio = await voice.text_to_speech(first_q, voice=voice_to_use) if first_q else None
 
     return {
         "question": first_q,
@@ -95,6 +105,7 @@ async def voice_interview_start(
 async def voice_interview_answer(
     session_id: int,
     file: UploadFile = File(..., description="语音回答"),
+    voice_id: str | None = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -110,7 +121,8 @@ async def voice_interview_answer(
         raise HTTPException(status_code=404, detail="面试会话不存在或已结束")
 
     reply_text = result.get("reply", "")
-    reply_audio = await voice.text_to_speech(reply_text, voice=voice.INTERVIEW_VOICE)
+    voice_to_use = _resolve_voice(voice_id, voice.INTERVIEW_VOICE)
+    reply_audio = await voice.text_to_speech(reply_text, voice=voice_to_use)
 
     return {
         "transcribed_text": transcribed,
@@ -124,6 +136,7 @@ async def voice_interview_answer(
 @router.post("/interview/{session_id}/voice-end")
 async def voice_interview_end(
     session_id: int,
+    voice_id: str | None = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -134,7 +147,8 @@ async def voice_interview_end(
 
     overall_text = report.get("overall", "")
     if overall_text:
-        audio = await voice.text_to_speech(overall_text, voice=voice.INTERVIEW_VOICE)
+        voice_to_use = _resolve_voice(voice_id, voice.INTERVIEW_VOICE)
+        audio = await voice.text_to_speech(overall_text, voice=voice_to_use)
         if audio:
             report["overall_audio_base64"] = voice.audio_to_base64(audio)
 
@@ -149,12 +163,14 @@ async def voice_interview_end(
 async def voice_mental_chat(
     file: UploadFile = File(..., description="语音消息"),
     topic: str = "其他",
+    voice_id: str | None = None,
     current_user: User = Depends(get_current_user),
 ):
     """
     语音心理支持对话 — ASR → AI 心理咨询师 → TTS
 
     上传语音消息，返回识别文本 + AI 回复文本 + 回复语音
+    可通过 voice_id 自定义 TTS 语音（取自 GET /voice/voices 返回列表）
     """
     audio_data = await file.read()
     transcribed = await voice.speech_to_text(audio_data, filename=file.filename or "audio.mp3")
@@ -164,7 +180,8 @@ async def voice_mental_chat(
 
     reply_text = await ai_service.mental_chat(topic, transcribed)
 
-    reply_audio = await voice.text_to_speech(reply_text, voice=voice.MENTAL_VOICE)
+    voice_to_use = _resolve_voice(voice_id, voice.MENTAL_VOICE)
+    reply_audio = await voice.text_to_speech(reply_text, voice=voice_to_use)
 
     return {
         "transcribed_text": transcribed,

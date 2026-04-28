@@ -84,7 +84,7 @@ export default function ConfessionsPage() {
         <AnimatePresence>
           {confessions.map((c, i) => (
             <motion.div key={c.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <Card className="shadow-sm hover:shadow-md transition-all">
+              <Card className="shadow-sm hover:shadow-md transition-all group hover:border-pink-200/50 dark:hover:border-pink-500/20 hover:-translate-y-0.5">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xl">{c.mood}</span>

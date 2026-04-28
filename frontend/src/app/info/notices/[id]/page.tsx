@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -401,9 +403,17 @@ export default function NoticeDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                  <div className="whitespace-pre-line text-sm leading-7">
+                <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-7
+                  prose-headings:font-semibold prose-headings:text-foreground prose-headings:mt-5 prose-headings:mb-2
+                  prose-h3:text-base prose-h3:text-primary
+                  prose-p:my-2 prose-p:leading-7
+                  prose-strong:text-foreground prose-strong:font-semibold
+                  prose-ol:my-2 prose-ul:my-2
+                  prose-li:my-1">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {notice.raw_content}
-                  </div>
+                  </ReactMarkdown>
+                </div>
               </CardContent>
             </Card>
           )}

@@ -21,6 +21,7 @@ import {
   DISCIPLINE_OPTIONS,
   MAJOR_OPTIONS,
   UNIVERSITY_OPTIONS,
+  SOURCE_TYPE_OPTIONS,
 } from "@/lib/constants";
 import { useState } from "react";
 import { type FilterValues, defaultFilterValues } from "@/stores/useFilterStore";
@@ -44,6 +45,7 @@ const filterLabelMap: Record<string, string> = {
   major: "专业",
   program_type: "类型",
   status: "状态",
+  source_type: "来源",
 };
 
 /** 获取筛选值的显示文本 */
@@ -55,6 +57,8 @@ function getFilterDisplayText(key: string, value: string): string {
       return NOTICE_TYPE_OPTIONS.find((o) => o.value === value)?.label || value;
     case "status":
       return NOTICE_STATUS_OPTIONS.find((o) => o.value === value)?.label || value;
+    case "source_type":
+      return SOURCE_TYPE_OPTIONS.find((o) => o.value === value)?.label || value;
     default:
       return value;
   }
@@ -220,6 +224,15 @@ export default function FilterPanel({
                 placeholder="省份"
                 allLabel="全部省份"
                 options={PROVINCE_OPTIONS.map(p => ({ value: p, label: p }))}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 mt-2.5">
+              <FilterSelect
+                value={values.source_type}
+                onValueChange={(v) => updateFilter("source_type", v)}
+                placeholder="信息来源"
+                allLabel="全部来源"
+                options={SOURCE_TYPE_OPTIONS.filter(o => o.value !== "all")}
               />
             </div>
           </div>

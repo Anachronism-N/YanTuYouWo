@@ -14,14 +14,14 @@ import { cn } from "@/lib/utils";
 
 const ACHIEVEMENT_TYPES = ["全部", "科研", "论文", "竞赛", "英语", "面试", "实习", "其他"];
 
-const typeConfig: Record<string, { icon: typeof BookOpen; color: string }> = {
-  "科研": { icon: BookOpen, color: "from-blue-500/10 to-cyan-500/10 text-blue-600" },
-  "论文": { icon: Code, color: "from-violet-500/10 to-purple-500/10 text-violet-600" },
-  "竞赛": { icon: Trophy, color: "from-amber-500/10 to-yellow-500/10 text-amber-600" },
-  "英语": { icon: Globe, color: "from-emerald-500/10 to-green-500/10 text-emerald-600" },
-  "面试": { icon: Star, color: "from-rose-500/10 to-pink-500/10 text-rose-600" },
-  "实习": { icon: Briefcase, color: "from-orange-500/10 to-red-500/10 text-orange-600" },
-  "其他": { icon: Heart, color: "from-gray-500/10 to-slate-500/10 text-gray-600 dark:text-gray-300" },
+const typeConfig: Record<string, { icon: typeof BookOpen; color: string; border: string }> = {
+  "科研": { icon: BookOpen, color: "from-blue-500/10 to-cyan-500/10 text-blue-600", border: "border-l-blue-500" },
+  "论文": { icon: Code, color: "from-violet-500/10 to-purple-500/10 text-violet-600", border: "border-l-violet-500" },
+  "竞赛": { icon: Trophy, color: "from-amber-500/10 to-yellow-500/10 text-amber-600", border: "border-l-amber-500" },
+  "英语": { icon: Globe, color: "from-emerald-500/10 to-green-500/10 text-emerald-600", border: "border-l-emerald-500" },
+  "面试": { icon: Star, color: "from-rose-500/10 to-pink-500/10 text-rose-600", border: "border-l-rose-500" },
+  "实习": { icon: Briefcase, color: "from-orange-500/10 to-red-500/10 text-orange-600", border: "border-l-orange-500" },
+  "其他": { icon: Heart, color: "from-gray-500/10 to-slate-500/10 text-gray-600 dark:text-gray-300", border: "border-l-gray-400" },
 };
 
 const MOCK_ACHIEVEMENTS = [
@@ -137,7 +137,7 @@ export default function AchievementsPage() {
                     <Icon className="h-3.5 w-3.5" />
                   </div>
 
-                  <Card className="shadow-sm hover:shadow-md transition-all group">
+                  <Card className={cn("shadow-sm hover:shadow-md transition-all group border-l-3", config.border)}>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
@@ -152,7 +152,7 @@ export default function AchievementsPage() {
                               ))}
                             </div>
                           </div>
-                          <h3 className="font-bold text-sm">{ach.title}</h3>
+                          <h3 className="font-bold text-sm group-hover:text-primary transition-colors">{ach.title}</h3>
                           <p className="text-xs text-muted-foreground mt-1">{ach.description}</p>
                           <div className="flex gap-1.5 mt-2">
                             {ach.tags.map((tag) => (

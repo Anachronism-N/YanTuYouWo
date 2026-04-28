@@ -460,7 +460,7 @@ export default function ResumePage() {
         </div>
 
         {/* 步骤条 */}
-        <div className="mb-6 flex items-center gap-1 overflow-x-auto pb-2 scrollbar-thin">
+        <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
           {STEPS.map((s, i) => {
             const Icon = s.icon;
             const active = i === step;
@@ -476,6 +476,9 @@ export default function ResumePage() {
               </button>
             );
           })}
+        </div>
+        <div className="mb-4 h-1 rounded-full bg-muted/50 overflow-hidden">
+          <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
         </div>
 
         {/* 表单 */}

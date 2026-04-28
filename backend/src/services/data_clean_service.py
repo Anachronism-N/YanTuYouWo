@@ -13,7 +13,15 @@ class DataCleanService:
         """清洗标题：移除前缀日期和噪音"""
         if not title:
             return ""
-        # "132026.03清华大学..." → "清华大学..."
+        title = re.sub(r"[\n\r\t]+", " ", title)
+        title = re.sub(r"\s{2,}", " ", title)
+        # Leading bullets/dots
+        title = re.sub(r"^[·•▪►◆※►]+\s*", "", title)
+        # "18:27:09国防科技大学..."
+        title = re.sub(r"^\d{2}:\d{2}:\d{2}", "", title)
+        # "12-16吉林大学..."
+        title = re.sub(r"^\d{2}-\d{2,6}", "", title)
+        # "132026.03清华大学..."
         title = re.sub(r"^\d{1,4}(\d{4})[./]\d{1,2}", "", title)
         # "162025-06标题"
         title = re.sub(r"^\d{1,3}(\d{4})[-./](\d{1,2})", r"\1-\2", title)
@@ -127,7 +135,93 @@ class DataCleanService:
         content = re.sub(r"附件\s*【[^】]+】\s*已下载\d*次?\s*", "", content)
 
         content = re.sub(r"\n{3,}", "\n\n", content)
-        return content.strip()
+        content = content.strip()
+
+        # ── 修复首行残片 ──
+        # 正文开头如果是孤立的标点/短词残片（<4字无数字），移除
+        if content:
+            first_nl = content.find("\n")
+            if first_nl > 0:
+                first_line = content[:first_nl].strip()
+                if (
+                    len(first_line) <= 3
+                    and not re.search(r"\d", first_line)
+                    and first_line not in ("一", "二", "三")
+                ):
+                    content = content[first_nl:].strip()
+            elif len(content) <= 3:
+                pass  # entire content is short, don't strip
+
+        # ── 移除开头的导航碎片行（"首页\n硕士招生\n..."） ──
+        while content:
+            first_nl = content.find("\n")
+            if first_nl < 0:
+                break
+            first_line = content[:first_nl].strip()
+            if (
+                len(first_line) <= 6
+                and re.match(r"^[\u4e00-\u9fa5]+$", first_line)
+                and first_line in (
+                    "首页", "返回", "通知", "公告", "MPA", "MBA",
+                    "招生", "培养", "学位", "学术",
+                )
+            ):
+                content = content[first_nl:].strip()
+            else:
+                break
+
+        return content
+
+    @staticmethod
+    def to_markdown(content: str) -> str:
+        """将正文转换为 Markdown 格式，便于前端渲染。
+
+        修复：
+        - 数字编号被拆散（"3.\\n材料审核" → "3. 材料审核"）
+        - 段落标号（"一、" / "（一）" / "(1)" 等）独立成行
+        - 列表项格式化（"1)" / "2)" / "•"）
+        - 段落标题加粗
+        """
+        if not content:
+            return ""
+
+        lines = content.split("\n")
+        out: list[str] = []
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            # Merge orphan numbering: "3." or "(9)" alone on a line → join with next
+            if line and i + 1 < len(lines):
+                if re.match(r"^[\(\(]?\d{1,2}[\)\)\.\、]$", line):
+                    nxt = lines[i + 1].strip()
+                    if nxt and not re.match(r"^[\(\(]?\d{1,2}[\)\)\.\、]$", nxt):
+                        out.append(f"{line} {nxt}")
+                        i += 2
+                        continue
+                # "（一）" / "一、" alone on a line
+                if re.match(r"^[（\(](?:[一二三四五六七八九十]|\d{1,2})[）\)]$", line) or \
+                   re.match(r"^[一二三四五六七八九十]+[、.]$", line):
+                    nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
+                    if nxt:
+                        out.append(f"**{line}** {nxt}")
+                        i += 2
+                        continue
+            out.append(lines[i])
+            i += 1
+        text = "\n".join(out)
+
+        # Convert numbered headings to markdown bold
+        text = re.sub(r"^([一二三四五六七八九十]+[、.]\s*[^\n]{2,30})$", r"### \1", text, flags=re.MULTILINE)
+        # Numbered list items: ensure "1." / "2)" have proper formatting
+        text = re.sub(r"^(\d+)[\.\)、]\s*", r"\1. ", text, flags=re.MULTILINE)
+        # Bold key labels
+        for label in ("报名时间", "活动时间", "申请条件", "招生人数", "招生名额",
+                       "联系方式", "联系电话", "联系邮箱", "申请材料", "时间安排"):
+            text = re.sub(rf"^({label})[：:]", rf"**\1：**", text, flags=re.MULTILINE)
+
+        # Clean up excessive blank lines
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        return text.strip()
 
     @staticmethod
     def extract_date_from_title(title: str) -> date | None:

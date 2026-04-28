@@ -104,7 +104,7 @@ export default function JournalsPage() {
   const switchTab = (t: Tab) => { setTab(t); setLevelFilter(""); setDisciplineFilter(""); };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* 标题 */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-3">
@@ -258,6 +258,6 @@ export default function JournalsPage() {
           <Button variant="ghost" size="sm" className="mt-2" onClick={clearFilters}>清除筛选条件</Button>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

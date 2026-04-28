@@ -13,6 +13,9 @@ import { Separator } from "@/components/ui/separator";
 import { SITE_NAME } from "@/lib/constants";
 import { useUserStore } from "@/stores/useUserStore";
 import { mockUserProfile, mockFavorites } from "@/lib/mock-data";
+import { register as apiRegister } from "@/lib/api";
+import { toast } from "sonner";
+import axios from "axios";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -29,34 +32,33 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (form.password !== form.confirmPassword) {
-      alert("两次输入的密码不一致");
+      toast.error("两次输入的密码不一致");
       return;
     }
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Mock 注册：使用表单信息覆盖 Mock 数据，注册后自动登录
-    const mockUser = {
-      ...mockUserProfile,
-      nickname: form.nickname || mockUserProfile.nickname,
-      email: form.email || mockUserProfile.email,
-      username: form.email.split("@")[0] || mockUserProfile.username,
-      university: null,
-      major: null,
-      grade: null,
-      gpa_rank: null,
-      target_universities: [],
-      research_interests: [],
-      is_onboarded: false,
-      bio: null,
-      created_at: new Date().toISOString(),
-    };
-    setUser(mockUser, "mock-token-" + Date.now());
-    setFavorites(mockFavorites);
-
-    setIsLoading(false);
-    // 注册后跳转到引导页填写个人信息
-    router.push("/user/onboarding");
+    const email = form.email.trim();
+    const username = email.split("@")[0] || form.nickname || "user";
+    try {
+      const res = await apiRegister({ email, password: form.password, username, nickname: form.nickname || username });
+      setUser(res.user ?? { ...mockUserProfile, email, username, nickname: form.nickname || username }, res.token);
+      setFavorites(mockFavorites);
+      toast.success("注册成功，欢迎加入！");
+      router.push("/user/onboarding");
+    } catch (err) {
+      console.error(err);
+      let msg = "注册失败，请稍后重试";
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 400) msg = "该邮箱已被注册或密码强度不够（至少 6 位）";
+        else if (err.code === "ERR_NETWORK") msg = "无法连接后端服务，请确认后端已启动";
+        else if (err.response?.data && typeof err.response.data === "object") {
+          const data = err.response.data as { detail?: string };
+          if (data.detail) msg = data.detail;
+        }
+      }
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -290,9 +292,9 @@ export default function RegisterPage() {
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
             注册即表示你同意我们的{" "}
-            <Link href="#" className="text-primary hover:underline">服务条款</Link>
+            <Link href="/about" className="text-primary hover:underline">服务条款</Link>
             {" "}和{" "}
-            <Link href="#" className="text-primary hover:underline">隐私政策</Link>
+            <Link href="/about" className="text-primary hover:underline">隐私政策</Link>
           </p>
         </motion.div>
       </div>

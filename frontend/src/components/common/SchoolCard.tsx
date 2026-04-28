@@ -34,7 +34,7 @@ export default function SchoolCard({ school }: { school: SchoolItem }) {
 
   return (
     <Link href={`/info/schools/${school.id}`}>
-      <Card className={`group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-1`}>
+      <Card className={`group relative overflow-hidden shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-1`}>
         <div className={`h-1 bg-gradient-to-r ${cfg.gradient}`} />
 
         <CardContent className="p-4">
@@ -73,14 +73,14 @@ export default function SchoolCard({ school }: { school: SchoolItem }) {
 
           {/* 统计信息 */}
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-2.5 py-1.5 text-xs">
+            <div className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-muted/30 to-transparent px-2.5 py-1.5 text-xs">
               <Building2 className="h-3.5 w-3.5 text-primary/60" />
-              <span className="font-medium">{school.department_count}</span>
+              <span className="font-medium tabular-nums">{school.department_count}</span>
               <span className="text-muted-foreground">个学院</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-2.5 py-1.5 text-xs">
+            <div className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-muted/30 to-transparent px-2.5 py-1.5 text-xs">
               <FileText className="h-3.5 w-3.5 text-primary/60" />
-              <span className="font-medium">{school.notice_count}</span>
+              <span className="font-medium tabular-nums">{school.notice_count}</span>
               <span className="text-muted-foreground">条通知</span>
             </div>
           </div>

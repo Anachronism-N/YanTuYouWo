@@ -37,7 +37,7 @@ export default function ScrollToTop() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-20 right-5 z-40 flex h-10 w-10 items-center justify-center rounded-full bg-primary/90 text-primary-foreground shadow-lg backdrop-blur-sm hover:bg-primary hover:shadow-xl transition-all active:scale-90"
+            className="fixed bottom-24 right-7 z-40 flex h-8 w-8 items-center justify-center rounded-full bg-muted/80 text-muted-foreground border border-border/50 shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground hover:shadow-lg hover:border-primary/30 transition-all active:scale-90"
             title="回到顶部"
           >
             <ArrowUp className="h-4 w-4" />

@@ -110,7 +110,7 @@ export default function HomePage() {
             className="mx-auto max-w-3xl text-center"
           >
             <motion.div variants={fadeInUp}>
-              <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm backdrop-blur-sm border-primary/30 bg-primary/5 shadow-sm shadow-primary/10">
+              <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm sm:text-base sm:px-5 sm:py-2 backdrop-blur-sm border-primary/30 bg-primary/5 shadow-sm shadow-primary/10">
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                 全国 {stats.school_count} 所高校信息已收录
               </Badge>
@@ -157,7 +157,7 @@ export default function HomePage() {
               </Button>
             </motion.form>
 
-            <motion.div variants={fadeInUp} className="mt-4 flex items-center justify-center gap-6 text-xs text-muted-foreground/60">
+            <motion.div variants={fadeInUp} className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground/60">
               <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> 实时更新</span>
               <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> 全国覆盖</span>
               <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> 免费使用</span>
@@ -166,14 +166,14 @@ export default function HomePage() {
             {/* 热门搜索 */}
             <motion.div
               variants={fadeInUp}
-              className="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground"
+              className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground"
             >
               <span>热门：</span>
               {["计算机", "人工智能", "金融", "北京大学", "清华大学"].map((kw) => (
               <Link
                   key={kw}
                   href={`/info/notices?keyword=${encodeURIComponent(kw)}`}
-                  className="rounded-full border px-3 py-1 transition-all hover:bg-primary/10 hover:text-primary hover:border-primary/30 hover:shadow-sm"
+                  className="rounded-full bg-muted/40 border-transparent px-3 py-1 text-foreground/70 transition-all hover:bg-primary/10 hover:text-primary hover:border-primary/30 hover:shadow-sm"
                 >
                   {kw}
                 </Link>
@@ -269,7 +269,7 @@ export default function HomePage() {
             ].map((item) => (
               <motion.div key={item.title} variants={fadeInUp}>
                 <Link href={item.href}>
-                  <Card className={`group h-full transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 ${item.border}`}>
+                  <Card className={`group h-full shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 ${item.border}`}>
                     <CardContent className="flex flex-col p-6">
                       <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${item.bg} ${item.color}`}>
                         <item.icon className="h-6 w-6" />
@@ -289,8 +289,14 @@ export default function HomePage() {
             ))}
           </div>
 
+          <div className="mt-8 mb-4 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border/50" />
+            <span className="text-xs font-medium text-muted-foreground shrink-0">智能工具</span>
+            <div className="h-px flex-1 bg-border/50" />
+          </div>
+
           {/* AI 辅导入口 */}
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="mt-0 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[
               {
                 title: "AI 简历工坊",
@@ -347,8 +353,14 @@ export default function HomePage() {
             ))}
           </div>
 
+          <div className="mt-8 mb-4 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border/50" />
+            <span className="text-xs font-medium text-muted-foreground shrink-0">更多能力</span>
+            <div className="h-px flex-1 bg-border/50" />
+          </div>
+
           {/* 更多功能入口 */}
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-0 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { title: "模拟面试", description: "AI 面试官实时提问与评价", icon: Mic, href: "/ai/interview", gradient: "from-blue-500/10 to-cyan-500/10", iconColor: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10" },
               { title: "心理支持", description: "保研路上的温暖陪伴", icon: Heart, href: "/ai/mental", gradient: "from-pink-500/10 to-rose-500/10", iconColor: "text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-500/10" },
@@ -391,7 +403,7 @@ export default function HomePage() {
                 <p className="mt-2 text-sm text-muted-foreground sm:text-base">实时更新全国高校推免招生信息</p>
               </div>
               <Link href="/info/notices">
-                <Button variant="outline" className="hidden sm:flex">
+                <Button variant="outline" className="hidden sm:flex hover:bg-primary/5 hover:text-primary hover:border-primary/30">
                   查看全部
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Button>
@@ -399,11 +411,15 @@ export default function HomePage() {
             </motion.div>
 
             <div className="mt-8 space-y-4">
-              {latestNotices.map((notice, i) => (
-                <motion.div key={notice.id} variants={fadeInUp} custom={i}>
-                  <InfoCard notice={notice} />
-                </motion.div>
-              ))}
+              {loading ? (
+                <div className="space-y-4">{Array.from({length:4}).map((_,i) => <div key={i} className="h-32 rounded-xl bg-muted/50 animate-pulse" />)}</div>
+              ) : (
+                latestNotices.map((notice, i) => (
+                  <motion.div key={notice.id} variants={fadeInUp} custom={i}>
+                    <InfoCard notice={notice} />
+                  </motion.div>
+                ))
+              )}
             </div>
 
             <div className="mt-6 text-center sm:hidden">
@@ -432,7 +448,7 @@ export default function HomePage() {
               <p className="mt-2 text-sm text-muted-foreground sm:text-base">985 重点高校推免信息一览</p>
             </div>
             <Link href="/info/schools">
-              <Button variant="outline" className="hidden sm:flex">
+              <Button variant="outline" className="hidden sm:flex hover:bg-primary/5 hover:text-primary hover:border-primary/30">
                 查看全部
                 <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>
@@ -440,11 +456,15 @@ export default function HomePage() {
           </motion.div>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {hotSchools.map((school, i) => (
-              <motion.div key={school.id} variants={fadeInUp} custom={i}>
-                <SchoolCard school={school} />
-              </motion.div>
-            ))}
+            {loading ? (
+              Array.from({length:8}).map((_,i) => <div key={i} className="h-28 rounded-xl bg-muted/50 animate-pulse" />)
+            ) : (
+              hotSchools.map((school, i) => (
+                <motion.div key={school.id} variants={fadeInUp} custom={i}>
+                  <SchoolCard school={school} />
+                </motion.div>
+              ))
+            )}
           </div>
 
           <div className="mt-6 text-center sm:hidden">

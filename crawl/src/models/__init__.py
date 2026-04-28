@@ -3,6 +3,7 @@
 from src.models.base import Base
 from src.models.university import University, Department, DepartmentSource
 from src.models.notice import AdmissionNotice, CrawlLog, CrawlState
+from src.models.tutor import Tutor, FacultyPageSource, TutorCrawlLog
 
 __all__ = [
     "Base",
@@ -12,4 +13,7 @@ __all__ = [
     "AdmissionNotice",
     "CrawlLog",
     "CrawlState",
+    "Tutor",
+    "FacultyPageSource",
+    "TutorCrawlLog",
 ]

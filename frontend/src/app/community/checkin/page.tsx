@@ -90,7 +90,7 @@ function CheckinCalendar({ checkedDays }: { checkedDays: string[] }) {
             <div key={day} className={cn(
               "flex h-9 w-9 items-center justify-center rounded-lg text-sm mx-auto transition-all",
               isChecked && "bg-green-500 text-white font-bold",
-              isToday && !isChecked && "ring-2 ring-primary",
+              isToday && !isChecked && "ring-2 ring-primary ring-offset-2 ring-offset-background",
               !isChecked && !isToday && "text-muted-foreground hover:bg-muted/50",
               day > todayDate && "opacity-30",
             )}>

@@ -384,7 +384,24 @@ def _clean_text(text: str) -> str:
 
     text = "\n".join(merged)
 
-    # ── 阶段5：最终清理 ──
+    # ── 阶段5：移除连续导航短行块 ──
+    final_lines: list[str] = []
+    nav_buffer: list[str] = []
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if stripped and len(stripped) <= 6 and re.match(r"^[\u4e00-\u9fa5]+$", stripped):
+            nav_buffer.append(line)
+        else:
+            if len(nav_buffer) >= 4:
+                pass  # drop navigation block
+            else:
+                final_lines.extend(nav_buffer)
+            nav_buffer = []
+            final_lines.append(line)
+    if len(nav_buffer) < 4:
+        final_lines.extend(nav_buffer)
+    text = "\n".join(final_lines)
+
+    # ── 阶段6：最终清理 ──
     text = re.sub(r"\n{3,}", "\n\n", text)
-    # 移除首尾空白行
     return text.strip()

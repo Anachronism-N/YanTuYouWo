@@ -10,6 +10,7 @@ export interface FilterValues {
   major: string;
   program_type: string;
   status: string;
+  source_type: string;
   sort: string;
 }
 
@@ -23,6 +24,7 @@ export const defaultFilterValues: FilterValues = {
   major: "",
   program_type: "",
   status: "",
+  source_type: "",
   sort: "latest",
 };
 
@@ -96,6 +98,7 @@ export const useFilterStore = create<FilterState>((set) => ({
         major: params.major || "",
         program_type: params.program_type || "",
         status: params.status || "",
+        source_type: params.source_type || "",
         sort: params.sort || "latest",
       },
       page: params.page ? parseInt(params.page, 10) : 1,

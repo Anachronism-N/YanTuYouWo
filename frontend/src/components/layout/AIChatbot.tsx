@@ -157,7 +157,7 @@ export default function AIChatbot() {
                       "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
                       msg.role === "user"
                         ? "bg-primary text-primary-foreground rounded-br-md"
-                        : "bg-muted rounded-bl-md",
+                        : "bg-muted rounded-bl-md shadow-sm ring-1 ring-border/20",
                     )}
                   >
                     {msg.content}
@@ -182,7 +182,7 @@ export default function AIChatbot() {
               <div className="flex gap-1.5 overflow-x-auto scrollbar-thin pb-1">
                 {QUICK_ACTIONS.map((a) => (
                   <Link key={a.label} href={a.href} onClick={close}>
-                    <button className="flex items-center gap-1 whitespace-nowrap rounded-full border bg-card px-2.5 py-1 text-[11px] font-medium hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all">
+                    <button className="flex items-center gap-1 whitespace-nowrap rounded-full border bg-card px-2.5 py-1 text-[11px] font-medium hover:bg-primary/10 hover:text-primary hover:border-primary/30 active:scale-[0.97] transition-all">
                       <span>{a.icon}</span>
                       {a.label}
                     </button>

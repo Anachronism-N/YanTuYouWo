@@ -13,29 +13,56 @@ import { Separator } from "@/components/ui/separator";
 import { SITE_NAME } from "@/lib/constants";
 import { useUserStore } from "@/stores/useUserStore";
 import { mockUserProfile, mockFavorites } from "@/lib/mock-data";
+import { login as apiLogin, getCurrentUser } from "@/lib/api";
+import { toast } from "sonner";
+import axios from "axios";
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [form, setForm] = useState({ email: "admin@yantu.com", password: "admin123" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const { setUser, setFavorites } = useUserStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Mock 登录：使用表单邮箱覆盖 Mock 数据中的邮箱
-    const mockUser = {
-      ...mockUserProfile,
-      email: form.email || mockUserProfile.email,
-    };
-    setUser(mockUser, "mock-token-" + Date.now());
-    setFavorites(mockFavorites);
+    const email = form.email.trim();
+    const password = form.password;
 
-    setIsLoading(false);
-    router.push("/");
+    try {
+      const res = await apiLogin({ email, password });
+      const token = res.token;
+      // 登录响应已经带了 user，直接写入
+      setUser(res.user ?? { ...mockUserProfile, email }, token);
+      // 可选：再异步拉最新 profile 覆盖（兜底）
+      try {
+        const profile = await getCurrentUser();
+        setUser(profile, token);
+      } catch {
+        // 拉取用户信息失败不阻塞登录
+      }
+      setFavorites(mockFavorites);
+      toast.success("登录成功");
+      router.push("/");
+    } catch (err) {
+      console.error(err);
+      let msg = "登录失败，请稍后重试";
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 401 || err.response?.status === 400) {
+          msg = "邮箱或密码错误";
+        } else if (err.code === "ERR_NETWORK") {
+          msg = "无法连接后端服务，请确认后端已启动（默认 http://localhost:8000）";
+        } else if (err.response?.data && typeof err.response.data === "object") {
+          const data = err.response.data as { detail?: string };
+          if (data.detail) msg = data.detail;
+        }
+      }
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,6 +73,8 @@ export default function LoginPage() {
         <div className="absolute -top-20 -left-20 h-80 w-80 rounded-full bg-white/10 blur-xl" />
         <div className="absolute bottom-10 right-10 h-60 w-60 rounded-full bg-white/10 blur-xl" />
         <div className="absolute top-1/3 right-1/4 h-40 w-40 rounded-full bg-white/5 blur-lg" />
+        <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
         {/* 网格装饰 */}
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
 
@@ -155,7 +184,7 @@ export default function LoginPage() {
                       密码
                     </label>
                     <Link
-                      href="#"
+                      href="/auth/login"
                       className="text-xs text-primary hover:underline"
                     >
                       忘记密码？
@@ -230,9 +259,9 @@ export default function LoginPage() {
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
             登录即表示你同意我们的{" "}
-            <Link href="#" className="text-primary hover:underline">服务条款</Link>
+            <Link href="/about" className="text-primary hover:underline">服务条款</Link>
             {" "}和{" "}
-            <Link href="#" className="text-primary hover:underline">隐私政策</Link>
+            <Link href="/about" className="text-primary hover:underline">隐私政策</Link>
           </p>
         </motion.div>
       </div>

@@ -21,13 +21,17 @@ export default function NotFound() {
           transition={{ delay: 0.1, duration: 0.4, type: "spring" }}
           className="relative mx-auto mb-8"
         >
-          <div className="text-[120px] font-bold leading-none tracking-tighter bg-gradient-to-b from-primary/20 to-primary/5 bg-clip-text text-transparent select-none sm:text-[160px]">
+          <div className="text-[120px] font-bold leading-none tracking-tighter bg-gradient-to-br from-primary via-blue-500 to-cyan-500 bg-clip-text text-transparent select-none sm:text-[160px]">
             404
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10"
+            >
               <MapPin className="h-8 w-8 text-primary" />
-            </div>
+            </motion.div>
           </div>
         </motion.div>
 

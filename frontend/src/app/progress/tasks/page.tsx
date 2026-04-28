@@ -222,7 +222,7 @@ export default function TasksPage() {
             { id: "todo", title: "待办", color: "border-t-gray-400", tasks: groupedByStatus.todo },
             { id: "done", title: "已完成", color: "border-t-green-400", tasks: groupedByStatus.done },
           ]).map((col) => (
-            <div key={col.id} className={cn("rounded-xl border-t-4 bg-muted/20 p-4", col.color)}>
+            <div key={col.id} className={cn("rounded-xl border border-border/50 border-t-4 bg-muted/20 p-4", col.color)}>
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-bold text-sm">{col.title}</h4>
                 <Badge variant="outline" className="text-xs">{col.tasks.length}</Badge>
@@ -239,7 +239,7 @@ export default function TasksPage() {
                           <p className={cn("text-xs leading-relaxed", task.is_completed && "line-through text-muted-foreground")}>{task.content}</p>
                           <div className="flex items-center gap-1.5 mt-1.5">
                             <Badge variant="outline" className="text-[9px]">{task.phase_title}</Badge>
-                            <div className={cn("h-1.5 w-1.5 rounded-full", priorityConfig[task.priority].dotColor)} />
+                            <div className={cn("h-2 w-2 rounded-full", priorityConfig[task.priority].dotColor)} />
                           </div>
                         </div>
                       </div>

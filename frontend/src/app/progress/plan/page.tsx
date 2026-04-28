@@ -274,7 +274,7 @@ export default function ProgressPlanPage() {
               const isEditing = editingNodeId === node.id;
               return (
                 <div key={node.id} className="relative pl-12">
-                  <div className="absolute left-[10px] top-3">{statusIcon(node.status)}</div>
+                  <div className="absolute left-[10px] top-3 rounded-full ring-2 ring-background">{statusIcon(node.status)}</div>
                   <div className={cn("rounded-xl border p-4 transition-all cursor-pointer hover:bg-muted/20 group/node",
                     node.status === "in_progress" && "border-amber-200 bg-amber-50/50 dark:border-amber-500/20 dark:bg-amber-500/5")}
                     onClick={() => toggleNode(node.id)}>

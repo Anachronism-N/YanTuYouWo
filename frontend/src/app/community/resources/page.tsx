@@ -85,9 +85,14 @@ export default function ResourcesPage() {
         <AnimatePresence>
           {filtered.map((r, i) => (
             <motion.div key={r.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <Card className="shadow-sm hover:shadow-md transition-all group">
+              <Card className="shadow-sm hover:shadow-md transition-all group hover:-translate-y-0.5">
                 <CardContent className="p-5 flex gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted/50">
+                  <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
+                    r.format === "PDF" ? "bg-gradient-to-br from-red-50 to-red-100 dark:from-red-500/10 dark:to-red-500/5"
+                    : r.format === "DOCX" ? "bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/5"
+                    : r.format === "MP4" ? "bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-500/10 dark:to-violet-500/5"
+                    : r.format === "在线" ? "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-500/10 dark:to-emerald-500/5"
+                    : "bg-muted/50")}>
                     {formatIcon(r.format)}
                   </div>
                   <div className="flex-1 min-w-0">

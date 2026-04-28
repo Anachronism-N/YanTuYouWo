@@ -7,6 +7,7 @@ from src.models.user import User, UserSettings, Favorite
 from src.models.community import Post, Comment, Checkin, PostLike
 from src.models.progress import Plan, Task, Achievement
 from src.models.tutor import Tutor
+from src.models.faculty import FacultyPageSource, TutorCrawlLog
 from src.models.ai import ResumeDraft, InterviewSession
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "AdmissionNotice", "CrawlLog", "CrawlState",
     "User", "UserSettings", "Favorite",
     "Post", "Comment", "Checkin", "PostLike",
-    "Plan", "Task", "Achievement", "Tutor",
+    "Plan", "Task", "Achievement",
+    "Tutor", "FacultyPageSource", "TutorCrawlLog",
     "ResumeDraft", "InterviewSession",
 ]

@@ -99,7 +99,7 @@ function QuestionCard({ question }: { question: QAQuestion }) {
   };
 
   return (
-    <Card className="group transition-all hover:shadow-md hover:border-primary/20">
+    <Card className="group transition-all hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5">
       <CardContent className="p-5">
         <div className="flex gap-4">
           {/* 左侧统计 */}
@@ -137,9 +137,11 @@ function QuestionCard({ question }: { question: QAQuestion }) {
               <div className="flex items-center gap-2">
                 {question.tags.map((t) => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}
               </div>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <span>{question.author.nickname}</span>
+                <span className="opacity-40">·</span>
                 <span>{question.author.school}</span>
+                <span className="opacity-40">·</span>
                 <span>{timeAgo(question.created_at)}</span>
               </div>
             </div>

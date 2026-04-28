@@ -30,7 +30,7 @@ async def get_stats_overview(db: AsyncSession) -> StatsOverview:
         school_count=school_count,
         notice_count=notice_count,
         department_count=department_count,
-        tutor_count=tutor_count if tutor_count > 0 else 1280,  # Mock: 无真实数据时显示预估值
+        tutor_count=tutor_count,
         user_count=user_count,
         post_count=post_count,
     )

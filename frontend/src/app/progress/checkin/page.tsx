@@ -260,7 +260,7 @@ export default function ProgressCheckinPage() {
           { label: "今日事项", value: `${checkedHabitsToday}/${totalHabits}`, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
           { label: "排名", value: `第 ${MOCK_STATS.rank} 名`, icon: Trophy, color: "text-amber-500 bg-amber-50" },
         ].map((stat) => (
-          <Card key={stat.label} className="shadow-sm">
+          <Card key={stat.label} className="shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
             <CardContent className="p-4 flex items-center gap-3">
               <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", stat.color)}>
                 <stat.icon className="h-5 w-5" />
@@ -372,7 +372,7 @@ export default function ProgressCheckinPage() {
                       </div>
 
                       {/* 操作按钮 */}
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500"
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground/40 hover:text-red-500 transition-colors"
                         onClick={() => deleteHabit(habit.id)}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

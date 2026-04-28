@@ -554,8 +554,12 @@ if tts_for_mental.status_code == 200 and len(tts_for_mental.content) > 1000:
 section("17. 管理员")
 # ══════════════════════════════════════════════════
 
-# Regular user → 403
+# Regular user → 403 on all admin endpoints
 G("/admin/users", token=t1, expect=403)
+G("/admin/dashboard", token=t1, expect=403)
+G("/admin/analytics", token=t1, expect=403)
+G("/admin/notices", token=t1, expect=403)
+G("/admin/posts", token=t1, expect=403)
 U("/admin/users/1/role", {"role": "admin"}, token=t1, expect=403)
 D("/admin/posts/1", token=t1, expect=403)
 U("/admin/posts/1/pin", token=t1, expect=403)
@@ -571,6 +575,28 @@ r = G("/admin/users?keyword=zhang", token=ta)
 ok("admin search users", r.json()["total"] >= 1)
 
 G("/admin/users?page=2&size=2", token=ta)
+G("/admin/users?role=admin", token=ta)
+
+# Dashboard
+r = G("/admin/dashboard", token=ta)
+d = r.json()
+ok("dashboard has stats", d["stats"]["user_count"] > 0)
+ok("dashboard has recent_users", len(d["recent_users"]) > 0)
+ok("dashboard has recent_posts", isinstance(d["recent_posts"], list))
+
+# Analytics
+r = G("/admin/analytics", token=ta)
+ok("analytics has content", r.json()["content"]["notices"] > 0)
+ok("analytics has post_by_category", isinstance(r.json()["post_by_category"], dict))
+
+# Admin notices
+r = G("/admin/notices", token=ta)
+ok("admin notices list", r.json()["total"] > 0)
+G("/admin/notices?status=published", token=ta)
+
+# Admin posts
+r = G("/admin/posts", token=ta)
+ok("admin posts list", r.json()["total"] > 0)
 
 # Pin toggle
 r = U(f"/admin/posts/{post1_id}/pin", token=ta)

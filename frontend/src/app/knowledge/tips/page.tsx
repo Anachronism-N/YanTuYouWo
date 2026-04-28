@@ -140,7 +140,7 @@ export default function TipsPage() {
                       </div>
 
                       {/* 标题 */}
-                      <h3 className="font-bold text-sm group-hover:text-amber-600 transition-colors">{tip.title}</h3>
+                      <h3 className="text-base font-semibold group-hover:text-amber-600 transition-colors">{tip.title}</h3>
 
                       {/* 内容 */}
                       <p className="text-sm text-muted-foreground mt-2 leading-relaxed line-clamp-3">{tip.content}</p>

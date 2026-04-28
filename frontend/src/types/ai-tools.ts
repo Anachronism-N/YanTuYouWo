@@ -1,5 +1,5 @@
 /** 面试模式 */
-export type InterviewMode = "text" | "video";
+export type InterviewMode = "text" | "voice" | "video";
 
 /** 简历来源 */
 export type ResumeSource = "platform" | "upload" | "none";

@@ -42,6 +42,17 @@ export type TargetDegree = "硕士" | "博士" | "硕博";
 /** 申请规则 */
 export type ApplicationRule = "可兼报" | "不可兼报" | "未知";
 
+/** 信息来源类型 */
+export type SourceType = "department" | "graduate_school" | "wechat" | "unknown";
+
+/** 信息来源中文映射 */
+export const SOURCE_TYPE_LABELS: Record<string, string> = {
+  department: "学院官网",
+  graduate_school: "研究生院",
+  wechat: "公众号",
+  unknown: "其他",
+};
+
 /** 通知列表项 */
 export interface NoticeItem {
   id: number;
@@ -71,6 +82,9 @@ export interface NoticeItem {
   intent_count: number;
   /** 申请规则 */
   application_rule: ApplicationRule;
+  /** 信息来源类型 */
+  source_type?: string;
+  source_type_key?: SourceType;
 }
 
 /** 通知详情 */
@@ -107,6 +121,7 @@ export interface NoticeQueryParams {
   major?: string;
   status?: NoticeStatus;
   keyword?: string;
+  source_type?: SourceType;
   sort?: "latest" | "deadline" | "hot";
   page?: number;
   size?: number;

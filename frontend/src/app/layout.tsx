@@ -23,12 +23,29 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://yantu.com"),
   title: {
     default: `${SITE_NAME} - 一站式保研信息聚合平台`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  keywords: ["保研", "推免", "夏令营", "预推免", "研究生", "985", "211"],
+  keywords: ["保研", "推免", "夏令营", "预推免", "研究生", "985", "211", "保研信息", "推免信息", "院校库", "导师库"],
+  openGraph: {
+    type: "website",
+    locale: "zh_CN",
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} - 一站式保研信息聚合平台`,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} - 一站式保研信息聚合平台`,
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

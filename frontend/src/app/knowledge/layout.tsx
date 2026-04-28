@@ -63,7 +63,7 @@ export default function KnowledgeLayout({ children }: { children: React.ReactNod
 
       <div className="flex gap-6">
         {/* 左侧导航 */}
-        <aside className="hidden lg:block w-52 shrink-0">
+        <aside className="hidden lg:block w-56 shrink-0">
           <Card className="sticky top-20 shadow-sm">
             <nav className="p-2 space-y-1">
               {knowledgeNav.map((item) => {

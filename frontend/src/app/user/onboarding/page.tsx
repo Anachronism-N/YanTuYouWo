@@ -297,7 +297,7 @@ export default function OnboardingPage() {
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       placeholder="搜索学校名称..."
-                      className="pl-10 h-11"
+                      className="pl-10 h-11 rounded-xl"
                       value={selectedUniversity || universitySearch}
                       onChange={(e) => {
                         setUniversitySearch(e.target.value);
@@ -315,7 +315,7 @@ export default function OnboardingPage() {
                       </button>
                     )}
                     {showUniversityDropdown && !selectedUniversity && (
-                      <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border bg-popover shadow-lg">
+                      <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-xl border bg-popover shadow-lg p-1">
                         {filteredUniversities.length > 0 ? (
                           filteredUniversities.map((u) => (
                             <button
@@ -373,7 +373,7 @@ export default function OnboardingPage() {
                       </button>
                     )}
                     {showMajorDropdown && !selectedMajor && (
-                      <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border bg-popover shadow-lg">
+                      <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-xl border bg-popover shadow-lg p-1">
                         {filteredMajors.length > 0 ? (
                           filteredMajors.map((m) => (
                             <button
@@ -535,7 +535,7 @@ export default function OnboardingPage() {
                         </button>
                       )}
                       {showTargetUniDropdown && !selectedTargetUni && (
-                        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border bg-popover shadow-lg">
+                        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-xl border bg-popover shadow-lg p-1">
                           {filteredTargetUnis.map((u) => (
                             <button
                               key={u.name}

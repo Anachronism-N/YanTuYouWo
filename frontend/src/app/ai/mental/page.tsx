@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { MentalMessage, MentalTopic, MentalAssessment, MentalMode, MiniGame } from "@/types/ai-tools";
+import VoiceChat from "@/components/ai/VoiceChat";
 
 /* ================================================================
    常量 & Mock
@@ -138,10 +139,11 @@ function TopicSelector({ onSelect, mode, onModeChange }: {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-violet-600"><Mic className="h-5 w-5" /></div>
                 <div>
                   <p className="font-semibold text-sm">语音交流</p>
-                  <Badge className="text-xs bg-amber-100 text-amber-700 mt-0.5">即将上线</Badge>
+                  <Badge className="text-xs bg-emerald-100 text-emerald-700 mt-0.5">已上线</Badge>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">语音对话，更自然的交流方式，像和朋友聊天</p>
+              {mode === "voice" && <div className="absolute top-3 right-3"><CheckCircle2 className="h-5 w-5 text-pink-500" /></div>}
             </button>
           </div>
         </CardContent>
@@ -185,8 +187,8 @@ function TopicSelector({ onSelect, mode, onModeChange }: {
       </Card>
 
       <Button onClick={() => selectedTopic && selectedMood && onSelect(selectedTopic, selectedMood)}
-        disabled={!selectedTopic || !selectedMood || mode === "voice"} size="lg" className="w-full h-12 text-base gap-2 bg-pink-600 hover:bg-pink-700">
-        <MessageCircle className="h-5 w-5" /> {mode === "voice" ? "语音交流即将上线" : "开始对话"}
+        disabled={!selectedTopic || !selectedMood} size="lg" className="w-full h-12 text-base gap-2 bg-pink-600 hover:bg-pink-700">
+        {mode === "voice" ? <><Mic className="h-5 w-5" /> 开始语音对话</> : <><MessageCircle className="h-5 w-5" /> 开始对话</>}
       </Button>
     </div>
   );
@@ -455,7 +457,7 @@ function ChatRoom({ topic, mood, onEnd }: { topic: MentalTopic; mood: string; on
                 {msg.role === "assistant" ? <Heart className="h-4.5 w-4.5" /> : <User className="h-4.5 w-4.5" />}
               </div>
               <div className={cn("max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
-                msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-pink-50 dark:bg-pink-500/10 text-foreground")}>
+                msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-pink-50 dark:bg-pink-500/10 text-foreground rounded-bl-sm")}>
                 <p className="whitespace-pre-wrap">{msg.content}</p>
               </div>
             </motion.div>
@@ -633,9 +635,19 @@ export default function MentalPage() {
             <TopicSelector onSelect={handleSelect} mode={mode} onModeChange={setMode} />
           </motion.div>
         )}
-        {activeTab === "chat" && phase === "chat" && (
+        {activeTab === "chat" && phase === "chat" && mode === "text" && (
           <motion.div key="chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
             <ChatRoom topic={topic} mood={mood} onEnd={() => setPhase("assessment")} />
+          </motion.div>
+        )}
+        {activeTab === "chat" && phase === "chat" && mode === "voice" && (
+          <motion.div key="voice-chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <VoiceChat
+              mode={{ kind: "mental", topic, mood }}
+              title="语音心理交流"
+              subtitle={`当前心情：${mood} · 随时可以退出结束`}
+              onExit={() => setPhase("assessment")}
+            />
           </motion.div>
         )}
         {activeTab === "chat" && phase === "assessment" && (
