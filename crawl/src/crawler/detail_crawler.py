@@ -221,7 +221,7 @@ def _validate_and_fix(extracted: dict, title: str, list_date: str | None) -> dic
     - 校验target_degree枚举值
     """
     # 校验 program_type
-    valid_types = {"夏令营", "预推免", "直博", "硕博连读", "招生简章", "入营名单", "拟录取", "招生宣讲", "其他"}
+    valid_types = {"夏令营", "预推免", "直博", "硕博连读", "招生简章", "入营名单", "拟录取", "统考招生", "招生宣讲", "其他"}
     if extracted.get("program_type") not in valid_types:
         # 尝试从标题推断
         if "夏令营" in title:
