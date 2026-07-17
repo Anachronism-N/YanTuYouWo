@@ -14,6 +14,15 @@ from src.config import settings
 from src.utils.ua_pool import get_default_headers
 
 
+def _http2_available() -> bool:
+    """检测 h2 包是否已安装（httpx 启用 http2=True 的前置依赖）。"""
+    try:
+        import h2  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
 class HttpClient:
     """异步 HTTP 客户端，内置频率控制和重试机制"""
 
@@ -21,6 +30,14 @@ class HttpClient:
         self._client: Optional[httpx.AsyncClient] = None
         self._semaphore = asyncio.Semaphore(settings.CRAWL_CONCURRENCY)
         self._domain_last_request: dict[str, float] = {}  # 域名 → 上次请求时间
+        # 预检测 HTTP/2 支持：未安装 h2 时优雅降级到 HTTP/1.1，
+        # 否则 httpx 会在每个请求上抛 ImportError 导致全部失败。
+        self._use_http2: bool = _http2_available()
+        if not self._use_http2:
+            logger.warning(
+                "未安装 h2 包，HTTP 客户端降级为 HTTP/1.1。"
+                "如需 HTTP/2，请执行: pip install 'httpx[http2]'"
+            )
 
     async def _get_client(self) -> httpx.AsyncClient:
         """懒初始化 HTTP 客户端"""
@@ -28,7 +45,7 @@ class HttpClient:
             self._client = httpx.AsyncClient(
                 timeout=httpx.Timeout(settings.CRAWL_TIMEOUT),
                 follow_redirects=True,
-                http2=True,
+                http2=self._use_http2,
                 limits=httpx.Limits(
                     max_connections=settings.CRAWL_CONCURRENCY * 2,
                     max_keepalive_connections=settings.CRAWL_CONCURRENCY,

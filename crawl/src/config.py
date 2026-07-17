@@ -2,8 +2,25 @@ from __future__ import annotations
 
 """配置管理模块 - 使用 Pydantic Settings 实现类型安全的配置"""
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# 凭证加载策略：优先从仓库之外的文件读取，避免把真实密钥放进 git 工作树。
+# 1) 环境变量 YANTU_ENV_FILE 指定的文件（最高优先级）
+# 2) 仓库根之上的 ../.env（即 ytyw/.env，位于 git 仓库外）
+# 3) 当前目录的 .env（项目默认，仅放非敏感配置）
+# load_dotenv 不会覆盖已存在的环境变量，调用顺序决定优先级。
+for _env_candidate in (
+    os.environ.get("YANTU_ENV_FILE"),
+    str(Path(__file__).resolve().parents[3] / ".env"),  # crawl/src 之上三级 = ytyw/.env（仓库外）
+    ".env",
+):
+    if _env_candidate and Path(_env_candidate).exists():
+        load_dotenv(_env_candidate, override=False)
+
 
 
 class Settings(BaseSettings):
