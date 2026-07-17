@@ -125,6 +125,32 @@ def test_date_prefix_not_penalized_as_stale():
     print("  ✅ 日期前缀不误判为过期")
 
 
+def test_title_overrides_llm_misclassification():
+    """标题强信号应覆盖 LLM 的误分类（渠道消歧）
+
+    真实场景：LLM 把「在职攻读博士拟录取」判为「拟录取」（推免），
+    但标题明确是统考/在职渠道 → 必须纠正为「统考招生」。
+    """
+    # LLM 说是「拟录取」，但标题是统考/在职 → 统考招生
+    assert infer_program_type(
+        "东南大学2026年高校思想政治工作骨干在职攻读博士学位研究生拟录取名单公示",
+        "拟录取",
+    ) == "统考招生"
+    # LLM 说是「招生简章」，但标题含初试/考试大纲 → 统考招生
+    assert infer_program_type(
+        "关于硕士生招生考试（初试）药学综合调整考试大纲的公告",
+        "招生简章",
+    ) == "统考招生"
+    # LLM 说是「拟录取」，标题明确推免 → 仍是拟录取（不被统考覆盖）
+    assert infer_program_type(
+        "重庆大学2026年拟录取推免硕士（直博）研究生名单公示",
+        "拟录取",
+    ) == "拟录取"
+    # 标题无强渠道信号时，信任 LLM 有效分类
+    assert infer_program_type("XX大学2026年研究生招生公告", "招生简章") == "招生简章"
+    print("  ✅ 标题强信号覆盖 LLM 渠道误分类")
+
+
 if __name__ == "__main__":
     print("=== 夏令营/预推免精度回归测试 ===")
     test_summer_camp_detection()
@@ -134,4 +160,5 @@ if __name__ == "__main__":
     test_stale_year_penalty()
     test_batch_filter_orders_tuimian_above_tongkao()
     test_date_prefix_not_penalized_as_stale()
+    test_title_overrides_llm_misclassification()
     print("\n🎉 所有精度测试通过!")
