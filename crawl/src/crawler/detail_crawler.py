@@ -146,6 +146,32 @@ async def process_notice(
         if not publish_date:
             publish_date = _extract_date_from_title(title)
 
+        # 9.5 日期兜底：LLM 漏提时，用正则从正文补全报名/活动日期（用户最关心截止日）
+        reg_start = _parse_date(extracted.get("registration_start"))
+        reg_end = _parse_date(extracted.get("registration_end"))
+        camp_start = _parse_date(extracted.get("camp_start"))
+        camp_end = _parse_date(extracted.get("camp_end"))
+        if reg_start is None or reg_end is None:
+            from src.processor.date_inference import infer_registration_window
+            try:
+                ri_s, ri_e = infer_registration_window(content, title)
+                if reg_start is None:
+                    reg_start = ri_s
+                if reg_end is None:
+                    reg_end = ri_e
+            except Exception as e:
+                logger.debug(f"报名日期推断异常: {e}")
+        if camp_start is None or camp_end is None:
+            from src.processor.date_inference import infer_camp_window
+            try:
+                ci_s, ci_e = infer_camp_window(content, title)
+                if camp_start is None:
+                    camp_start = ci_s
+                if camp_end is None:
+                    camp_end = ci_e
+            except Exception as e:
+                logger.debug(f"活动日期推断异常: {e}")
+
         # 10. 构建通知对象
         notice = AdmissionNotice(
             university_id=university_id,
@@ -160,10 +186,10 @@ async def process_notice(
             disciplines=extracted.get("disciplines"),
             quota=extracted.get("quota"),
             requirements=extracted.get("requirements"),
-            registration_start=_parse_date(extracted.get("registration_start")),
-            registration_end=_parse_date(extracted.get("registration_end")),
-            camp_start=_parse_date(extracted.get("camp_start")),
-            camp_end=_parse_date(extracted.get("camp_end")),
+            registration_start=reg_start,
+            registration_end=reg_end,
+            camp_start=camp_start,
+            camp_end=camp_end,
             registration_url=extracted.get("registration_url"),
             contact=extracted.get("contact"),
             summary=extracted.get("summary"),
