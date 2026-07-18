@@ -13,6 +13,8 @@ def normalize_url(url: str, base_url: str | None = None) -> str:
     3. 排序 query 参数
     4. 移除尾部斜杠
     """
+    if not isinstance(url, str) or not url:
+        return ""
     if base_url:
         # 修复子路径学院的相对链接解析：
         # 当 base_url 路径不以 / 结尾且不含文件扩展名时，
