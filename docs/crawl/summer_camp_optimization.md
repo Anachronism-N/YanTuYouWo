@@ -141,7 +141,7 @@ python scripts/validate_process_notice.py
 
 1. **Hub/汇总页**：东南「汇总」、天大「更新中」这类索引页正文很薄，单个院系通知
    要靠各学院源覆盖（阶段一定位已支持）；可考虑对汇总页做二级链接展开。
-2. **微信文章**：`mp.weixin.qq.com` 已走 Playwright，但正文提取仍有失败，需专用解析。
+2. ~~**微信文章**~~：`mp.weixin.qq.com` 提取**已验证可用**（见下 7.3）。
 3. **更大样本回归**：当前验证基于 10 所可访问高校；可结合阶段一/二全量源跑一次
    完整 `run_crawl.py` 复核整体指标（program_type 分布、日期覆盖率）。
 
@@ -171,3 +171,19 @@ python scripts/validate_process_notice.py
 
 > 注：`full_pipeline_e2e` 在有限超时内难跑完整批（每条详情+LLM≈8s，单源数十条），
 > 故聚合报告以 `validate_process_notice` 的逐条入库结果为准；各环节均已独立验证通过。
+
+### 7.3 报名/活动日期正则兜底 + 微信文章提取确认
+
+- **报名日期兜底**：新增 `src/processor/date_inference.py`，在 LLM 漏提
+  `registration_start/end`、`camp_start/end` 时，用正则从正文补全（只认明确截止信号，
+  支持 YYYY-MM-DD/年月日/仅月日+标题年份/「日期前报名」反序/区间）。真实管线验证：
+  天大「专项博士招生简章」`reg_end=2026-04-07` 被补全（LLM 漏提）。
+- **微信文章提取**：文档原记「`mp.weixin.qq.com` 正文提取失败」。本轮确认 **已可用**——
+  `content_extractor` 的 `js_content`/`rich_media_content` 选择器 + `data-src` 图片提取 +
+  本轮 HTTP/2 修复（此前 httpx 全失败）共同解决。`tests/test_content_extractor.py` 锁定。
+
+### 7.4 测试汇总
+
+`tests/` 下新增/扩充：`test_summer_camp_precision`(10) / `test_tutor_units`(7) /
+`test_date_inference`(9) / `test_research_areas`(5) / `test_content_extractor`(4) +
+原有 `test_phase3_unit`(12) → **全量 43 项通过**。
