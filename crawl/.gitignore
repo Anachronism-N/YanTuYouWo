@@ -17,6 +17,15 @@ env/
 # 数据文件
 data/yantu_crawl.db
 data/snapshots/
+# SQLite 临时文件（WAL/journal/SHM）
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+# 各类测试/验证库
+data/test_*.db
+data/*_e2e.db
+data/validate_*.db
+data/large_scale_test.db
 
 # IDE
 .idea/
