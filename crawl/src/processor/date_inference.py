@@ -33,6 +33,8 @@ _REG_END_SIGNALS = [
     r"截止(?:日期|时间)\s*[：:]\s*",
     r"截至\s*",
     r"[Dd]eadline\s*[：:.\s]*",
+    # 「即日起至 X月X日」「即日起到 X月X日」——截止日是后面的日期
+    r"(?:自|从)?即日起.{0,3}(?:至|到|截至)\s*",
 ]
 _REG_END_RE = re.compile("|".join(_REG_END_SIGNALS))
 

@@ -74,6 +74,15 @@ def test_no_false_positive_on_irrelevant_date():
     print("  ✅ 无截止信号时不误判")
 
 
+def test_registration_end_jiri_zhi():
+    """「即日起至 X月X日」「即日起到 X月X日」截止信号"""
+    s, e = infer_registration_window("报名即日起至6月15日。", title="2026年夏令营")
+    assert e == date(2026, 6, 15), e
+    s2, e2 = infer_registration_window("自即日起到2026年6月20日截止。", title="")
+    assert e2 == date(2026, 6, 20), e2
+    print("  ✅ 即日起至/到 X月X日")
+
+
 def test_realistic_summer_camp_snippet():
     """贴近真实夏令营通知的综合片段"""
     content = """
