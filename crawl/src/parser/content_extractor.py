@@ -294,6 +294,16 @@ def simplify_html(html: str, max_length: int = 3000) -> str:
 def _clean_text(text: str) -> str:
     """清理提取的文本，修复格式问题，去除噪音"""
 
+    if not text:
+        return ""
+
+    # ── 阶段0：规整空白字符 ──
+    # 全角空格 　、不间断空格 \xa0、其他 Unicode 空白统一成普通空格
+    text = text.replace("　", " ").replace("\xa0", " ")
+    text = re.sub(r"[ \t]+", " ", text)
+    # Windows/旧 Mac 换行统一为 \n
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+
     # ── 阶段1：修复被换行符拆散的数字/文字 ──
     for _ in range(8):
         text, n1 = re.subn(r"(\d+)\s*\n\s*(年|月|日|号|时|分|秒|点|期|届|级|人|名|个|项|条|篇|次|周|%)", r"\1\2", text)
@@ -404,4 +414,26 @@ def _clean_text(text: str) -> str:
 
     # ── 阶段6：最终清理 ──
     text = re.sub(r"\n{3,}", "\n\n", text)
-    return text.strip()
+    text = text.strip()
+
+    # ── 阶段7：移除开头的孤立导航词行（"首页\n"/"返回\n"/"通知公告\n" 等）──
+    # 单字/双字纯中文导航词独占首行时，几乎肯定是面包屑残留。
+    # 兼顾被短行合并拼起来的情况（"首页"+"硕士招生" → "首页硕士招生"）。
+    _LEADING_NAV_WORDS = {
+        "首页", "返回", "通知", "公告", "通知公告", "正文", "详情",
+        "招生", "培养", "学位", "学术", "新闻", "动态", "硕士招生",
+        "博士招生", "本科招生",
+    }
+    while text:
+        nl = text.find("\n")
+        first = text[:nl].strip() if nl >= 0 else text.strip()
+        if not first:
+            text = text[nl + 1:].strip() if nl >= 0 else ""
+            continue
+        is_pure_cjk_short = bool(re.match(r"^[一-龥]{1,8}$", first))
+        if is_pure_cjk_short and any(first == w or first.startswith(w) for w in _LEADING_NAV_WORDS):
+            text = text[nl:].strip() if nl >= 0 else ""
+        else:
+            break
+
+    return text
