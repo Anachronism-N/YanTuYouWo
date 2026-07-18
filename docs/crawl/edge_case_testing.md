@@ -1,7 +1,7 @@
 # 爬虫边界工况测试覆盖（2026-07）
 
 > 本轮目标：最完整的测试 + 覆盖所有工况 + 内容格式整理优化。
-> 通过构建边界测试矩阵「先暴露问题，再修复」，累计 **86 项自动化测试全过**。
+> 通过构建边界测试矩阵「先暴露问题，再修复」，累计 **95 项自动化测试全过**。
 
 ---
 
@@ -19,7 +19,8 @@
 | **`test_content_format_edge.py`** | **13** | **正文格式整理边界（本轮新增）** |
 | **`test_filter_date_edge.py`** | **12** | **过滤/日期对抗性边界（本轮新增）** |
 | **`test_http_layer_edge.py`** | **6** | **HTTP/编码/导航/SPA（本轮新增）** |
-| **合计** | **86** | |
+| **`test_url_utils.py`** | **9** | **URL 规范化/有效性/同域（本轮新增）** |
+| **合计** | **95** | |
 
 运行：
 ```bash
@@ -27,7 +28,7 @@ cd crawl
 PYTHONUTF8=1 python -m pytest tests/test_phase3_unit.py tests/test_summer_camp_precision.py \
   tests/test_tutor_units.py tests/test_date_inference.py tests/test_research_areas.py \
   tests/test_content_extractor.py tests/test_list_parser_edge.py tests/test_content_format_edge.py \
-  tests/test_filter_date_edge.py tests/test_http_layer_edge.py -q
+  tests/test_filter_date_edge.py tests/test_http_layer_edge.py tests/test_url_utils.py -q
 ```
 
 ---
@@ -42,6 +43,7 @@ PYTHONUTF8=1 python -m pytest tests/test_phase3_unit.py tests/test_summer_camp_p
 | 4 | `\r\n` / `\r` 未规整 | Windows 服务器页面 | 阶段0 统一为 `\n` |
 | 5 | 开头面包屑碎片未清除（含被合并的「首页硕士招生」） | 学院通知详情页 | `_clean_text` 阶段7 迭代剥离导航词行 |
 | 6 | 日期区间「两个都是月日（无年份）」不解析 | 「活动时间：7月5日—7月9日」 | `_find_date_window_range` 新增 default_year 双月日分支 |
+| 7 | `normalize_url(None/空)` 抛 TypeError | None/空 href | 入口守卫返回空串 |
 
 ---
 
