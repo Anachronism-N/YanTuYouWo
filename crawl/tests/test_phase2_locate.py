@@ -278,7 +278,8 @@ async def run_phase2_test(
     logger.info(f"\n📊 总覆盖率: {covered}/{effective_total} ({coverage:.1f}%)")
 
     # 各高校详情
-    logger.info(f"\n{'高校':<18} {'测试学院':>6} {'成功':>4} {'部分':>4} {'回退':>4} {'失败':>4} {'跳过':>4} {'信息源':>5} {'覆盖率':>6}")    logger.info("-" * 80)
+    logger.info(f"\n{'高校':<18} {'测试学院':>6} {'成功':>4} {'部分':>4} {'回退':>4} {'失败':>4} {'跳过':>4} {'信息源':>5} {'覆盖率':>6}")
+    logger.info("-" * 80)
 
     for uni_result in all_results:
         uni_name = uni_result["university"]
