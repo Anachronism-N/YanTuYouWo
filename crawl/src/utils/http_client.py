@@ -249,6 +249,43 @@ class HttpClient:
             await self._client.aclose()
             self._client = None
 
+    async def fetch_bytes(self, url: str, *, retry: int | None = None) -> Optional[bytes]:
+        """下载二进制内容（PDF/图片附件等）。复用频率控制与重试，返回原始字节。
+
+        失败返回 None（不抛异常）。专用于 PDF 附件等二进制抓取，避免触发文本解码。
+        """
+        from src.utils.url_utils import get_domain
+
+        max_retries = retry if retry is not None else settings.CRAWL_RETRY_TIMES
+        domain = get_domain(url)
+        req_headers = get_default_headers()
+
+        for attempt in range(max_retries + 1):
+            try:
+                async with self._semaphore:
+                    await self._rate_limit(domain)
+                    client = await self._get_client()
+                    response = await client.request("GET", url, headers=req_headers)
+                    if response.status_code == 200:
+                        return response.content
+                    if response.status_code == 404:
+                        return None
+                    if response.status_code in (403, 429, 503) and attempt < max_retries:
+                        await asyncio.sleep((attempt + 1) * 5)
+                        continue
+                    if response.status_code >= 500 and attempt < max_retries:
+                        await asyncio.sleep(2 * (attempt + 1))
+                        continue
+                    return None
+            except httpx.HTTPError:
+                if attempt < max_retries:
+                    await asyncio.sleep(2 * (attempt + 1))
+                else:
+                    return None
+            except Exception:
+                return None
+        return None
+
 
 # 全局 HTTP 客户端单例
 http_client = HttpClient()

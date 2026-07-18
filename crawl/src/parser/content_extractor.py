@@ -195,23 +195,10 @@ def _smart_get_text(element: Tag) -> str:
 
 
 def _extract_pdf_fallback(soup: BeautifulSoup) -> str:
-    """
-    当正文内容过短时，检测PDF嵌入/附件并提取信息。
-    
-    常见场景：
-    - 博达站群的 wp_pdf_player（如哈工大）
-    - 直接嵌入的PDF链接
-    - iframe嵌入的PDF
-    
-    Returns:
-        包含标题和PDF链接的文本描述，或空字符串
-    """
+    """正文过短时的占位：返回标题 + PDF 链接描述（实际 PDF 文本由 detail_crawler 提取）。"""
     parts = []
-    
-    # 提取页面标题
     title_el = soup.find("title")
     page_title = title_el.get_text(strip=True) if title_el else ""
-    # 也尝试从h1/h2中提取
     for h_tag in ["h1", "h2", "h3"]:
         h_el = soup.find(h_tag)
         if h_el:
@@ -219,34 +206,68 @@ def _extract_pdf_fallback(soup: BeautifulSoup) -> str:
             if len(h_text) > len(page_title):
                 page_title = h_text
             break
-    
     if page_title:
         parts.append(f"标题：{page_title}")
-    
-    # 检测博达站群PDF播放器
-    pdf_players = soup.find_all(attrs={"class": "wp_pdf_player"})
-    for player in pdf_players:
-        pdf_src = player.get("pdfsrc", "")
-        if pdf_src:
-            parts.append(f"[PDF附件] {pdf_src}")
-    
-    # 检测直接的PDF链接
+    pdf_url = find_pdf_url_from_soup(soup)
+    if pdf_url:
+        parts.append(f"[PDF附件] {pdf_url}")
+    return "\n".join(parts) if len(parts) > 1 else ""
+
+
+def find_pdf_url_from_soup(soup: BeautifulSoup) -> str | None:
+    """从已解析的 soup 中找第一个 PDF 链接（博达 wp_pdf_player / a[href=.pdf] / embed/object）。"""
+    # 1. 博达站群 wp_pdf_player 的 pdfsrc
+    for player in soup.find_all(attrs={"class": "wp_pdf_player"}):
+        src = player.get("pdfsrc", "")
+        if src:
+            return src
+    # 2. <a href="*.pdf">
     for a_tag in soup.find_all("a", href=True):
-        href = a_tag["href"]
-        if href.lower().endswith(".pdf"):
-            link_text = a_tag.get_text(strip=True) or "PDF文件"
-            parts.append(f"[PDF附件] {link_text}: {href}")
-    
-    # 检测嵌入的object/embed标签
+        if a_tag["href"].lower().split("?")[0].endswith(".pdf"):
+            return a_tag["href"]
+    # 3. <embed>/<object data/src=".pdf">
     for tag in soup.find_all(["object", "embed"]):
-        src = tag.get("data", "") or tag.get("src", "")
+        src = tag.get("data", "") or tag.get("src", "") or ""
         if ".pdf" in src.lower():
-            parts.append(f"[PDF嵌入] {src}")
-    
-    if len(parts) > 1:  # 至少有标题+一个PDF
-        return "\n".join(parts)
-    
-    return ""
+            return src
+    return None
+
+
+def find_pdf_url(html: str, base_url: str = "") -> str | None:
+    """从 HTML 找 PDF 链接并转绝对 URL。"""
+    if not html:
+        return None
+    soup = BeautifulSoup(html, "lxml")
+    raw = find_pdf_url_from_soup(soup)
+    if raw and base_url and not raw.startswith("http"):
+        return urljoin(base_url, raw)
+    return raw
+
+
+def extract_text_from_pdf_bytes(data: bytes, max_chars: int = 8000) -> str:
+    """从 PDF 二进制提取文本（pymupdf/fitz）。失败/无文本返回空串。"""
+    if not data:
+        return ""
+    try:
+        import fitz  # pymupdf
+    except ImportError:
+        return ""
+    try:
+        doc = fitz.open(stream=data, filetype="pdf")
+        parts: list[str] = []
+        total = 0
+        for page in doc:
+            t = page.get_text()
+            if t:
+                parts.append(t)
+                total += len(t)
+                if total >= max_chars:
+                    break
+        doc.close()
+        text = "\n".join(parts).strip()
+        return text[:max_chars]
+    except Exception:
+        return ""
 
 
 def simplify_html(html: str, max_length: int = 3000) -> str:

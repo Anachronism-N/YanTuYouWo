@@ -57,6 +57,22 @@ async def _prepare_notice(
         # 2. 提取正文和图片
         content, images = extract_content_with_images(detail_html, url)
 
+        # 2.4 PDF 附件兜底：正文过短且页面含 PDF 链接时，下载并提取 PDF 文本
+        #     （很多夏令营/招生通知以 PDF 附件发布，否则会被质量门当空正文丢弃）
+        if len(content) < 200:
+            try:
+                from src.parser.content_extractor import find_pdf_url, extract_text_from_pdf_bytes
+                pdf_url = find_pdf_url(detail_html, url)
+                if pdf_url:
+                    pdf_bytes = await http_client.fetch_bytes(pdf_url, retry=1)
+                    if pdf_bytes:
+                        pdf_text = extract_text_from_pdf_bytes(pdf_bytes)
+                        if pdf_text and len(pdf_text) > len(content):
+                            logger.info(f"从 PDF 附件提取正文: {len(pdf_text)} 字 | {title}")
+                            content = pdf_text
+            except Exception as e:
+                logger.debug(f"PDF 提取异常: {e}")
+
         # 2.5 内容质量检查（图片多的通知文字可以少一些）
         content_len = len(content) if content else 0
         has_images = len(images) >= 1

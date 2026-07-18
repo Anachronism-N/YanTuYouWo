@@ -17,6 +17,8 @@ dependencies = [
     "python-dotenv>=1.0.0",
     # 导师 OpenAlex 补充：中文姓名 → 拼音（缺失会导致 OpenAlex 命中率骤降）
     "pypinyin>=0.50.0",
+    # PDF 附件通知正文提取（无则优雅降级，跳过 PDF 内容）
+    "pymupdf>=1.23.0",
 ]
 
 [project.optional-dependencies]
