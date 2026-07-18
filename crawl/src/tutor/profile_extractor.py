@@ -391,6 +391,10 @@ async def extract_profile(
         }
 
     cleaned = _validate_extracted(parsed)
+    # 研究方向泛化：并入宽泛类别（人工智能/计算机视觉/网络安全…），让泛词检索可命中
+    if cleaned.get("research_areas"):
+        from src.tutor.research_areas import broaden_research_areas
+        cleaned["research_areas"] = broaden_research_areas(cleaned["research_areas"])
     completeness = score_tier1_completeness(cleaned)
 
     return {

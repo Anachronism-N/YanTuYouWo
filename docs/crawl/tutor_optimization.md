@@ -99,8 +99,31 @@ topics: Advanced Sensor and Energy Harvesting Materials / Advanced Materials and
 
 ## 六、后续待办（沿用 `tutor_crawler.md` 第十节）
 
-1. `research_area=人工智能 命中 0`：需后端搜索做同义词扩展（人工智能↔AI/机器学习），
-   属后端检索层，非爬虫范畴。
+1. ~~`research_area=人工智能 命中 0`~~：**已在爬虫侧缓解**（见下「研究方向泛化」），
+   后端若额外做同义词/语义检索可进一步提升。
 2. OpenAlex 50% 命中率上限：很多国内教师无英文论文，OpenAlex 本身无索引；可接 AMiner。
 3. 瑞数反爬高校（川大/兰大）师资页仍不可达。
 4. 全量 39 校师资页定位（阶段 A）需 5-7h，建议季度跑。
+
+---
+
+## 七、补充（2026-07，研究方向泛化 + 报名日期兜底）
+
+### 7.1 研究方向泛化（缓解「人工智能 命中 0」）
+
+`src/tutor/research_areas.py`：B2 提取后把具体方向映射到用户常搜的宽泛类别，
+并入 `research_areas`（具体项保留、去重、长度上限 15）。如「深度学习/图像识别/目标检测」
+→ 追加「人工智能/计算机视觉」。覆盖 17 个宽泛类别（CV/NLP/语音/机器人/安全/数据挖掘/
+软件工程/数据库/系统/网络/AI/控制/信号/微电子/生物信息/材料/量子）。
+
+仅做关键词映射，不删具体项，精确性不受损；后端按子串检索 `research_areas` 即可命中泛词。
+
+### 7.2 报名/活动日期兜底（夏令营/推免，详见 `summer_camp_optimization.md`）
+
+导师侧未改动，但通知侧新增 `src/processor/date_inference.py`，对夏令营/预推免
+通知在 LLM 漏提时用正则补全 `registration_end`/`camp_start` 等。
+
+### 7.3 测试
+
+`tests/test_research_areas.py`（5 项）+ `tests/test_date_inference.py`（9 项），
+全量 **39 项测试通过**。
