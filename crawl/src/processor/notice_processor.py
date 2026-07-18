@@ -251,11 +251,11 @@ class NoticeProcessor:
         department_id: int | None,
         source_id: int,
     ) -> int:
-        """
-        串行处理详情页（SQLite不支持并发写入）。
+        """并发抓取+提取，串行入库（SQLite 写入不支持并发，但网络/LLM 可并发）。
 
-        按相关性评分排序，优先处理高相关条目。
-        每条处理完后做flush，避免session冲突。
+        拆分自原串行实现：_prepare_notice（网络/CPU，可并发）+ _store_notice（DB，串行）。
+        并发度由 DETAIL_CONCURRENCY 控制；http_client 内部仍有域名级频率控制，
+        保证对同一站点不致过于密集。
 
         Args:
             items: 新发现的通知条目列表
@@ -266,25 +266,42 @@ class NoticeProcessor:
         Returns:
             成功处理的通知数量
         """
-        processed_count = 0
+        from src.crawler.detail_crawler import _prepare_notice, _store_notice
 
         # 按相关性评分排序，优先处理高相关条目
         sorted_items = sorted(items, key=lambda x: x.get("relevance_score", 0), reverse=True)
 
-        for i, item in enumerate(sorted_items):
+        sem = asyncio.Semaphore(self.DETAIL_CONCURRENCY)
+
+        async def _prepare_one(item: dict) -> dict | None:
+            async with sem:
+                # 同源条目共享 http_client 的域名级限流，仍保留小幅请求间隔
+                await asyncio.sleep(0.3)
+                try:
+                    return await _prepare_notice(
+                        item,
+                        university_id=university_id,
+                        department_id=department_id,
+                        source_id=source_id,
+                    )
+                except Exception as e:
+                    logger.error(f"  详情页准备异常: {item.get('title', '?')} - {e}")
+                    return None
+
+        # 并发执行网络/CPU 阶段（不触碰 DB）
+        prepared_list = await asyncio.gather(*[_prepare_one(it) for it in sorted_items])
+
+        # 串行入库（避免 SQLite database is locked）
+        processed_count = 0
+        for prepared in prepared_list:
+            if not prepared:
+                continue
             try:
-                # 请求间延迟，避免对同一域名过于密集
-                await asyncio.sleep(0.5)
-                notice = await process_notice(
-                    item, self.session,
-                    university_id=university_id,
-                    department_id=department_id,
-                    source_id=source_id,
-                )
+                notice = await _store_notice(prepared, self.session)
                 if notice:
                     processed_count += 1
             except Exception as e:
-                logger.error(f"  详情页处理异常: {item.get('title', '?')} - {e}")
+                logger.error(f"  入库异常: {prepared.get('title', '?')} - {e}")
 
         return processed_count
 

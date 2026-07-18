@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
 from datetime import datetime, date
 from typing import Optional
@@ -17,34 +18,16 @@ from src.processor.rule_filter import relevance_score, infer_program_type
 from src.llm.client import llm_client
 
 
-async def process_notice(
+async def _prepare_notice(
     item: dict,
-    session: AsyncSession,
     university_id: int,
     department_id: Optional[int] = None,
     source_id: Optional[int] = None,
-) -> Optional[AdmissionNotice]:
-    """
-    处理单条通知：爬取详情页 → 分类 → 提取 → 入库。
+) -> Optional[dict]:
+    """网络/CPU 阶段（可并发）：抓取详情→提取→分类→校验→日期补全。
 
-    流程：
-    1. 请求详情页HTML
-    2. 提取正文内容
-    3. LLM分类（中等置信度需要确认，高置信度跳过）
-    4. LLM结构化提取
-    5. 保存HTML快照
-    6. 数据校验
-    7. 入库
-
-    Args:
-        item: 通知条目 {"title": ..., "url": ..., "date": ..., "relevance_score": ...}
-        session: 数据库会话
-        university_id: 高校 ID
-        department_id: 学院 ID（可选）
-        source_id: 信息源 ID（可选）
-
-    Returns:
-        入库的通知对象，失败返回 None
+    不触碰数据库会话，可安全并发执行（http_client 内部已做域名级频率控制）。
+    返回准备好的字段 dict；被质量门/分类拒绝或失败时返回 None。
     """
     title = item.get("title", "")
     url = item.get("url", "")
@@ -172,68 +155,123 @@ async def process_notice(
             except Exception as e:
                 logger.debug(f"活动日期推断异常: {e}")
 
-        # 10. 构建通知对象
-        notice = AdmissionNotice(
-            university_id=university_id,
-            department_id=department_id,
-            source_id=source_id,
-            title=_clean_title(title),
-            source_url=url,
-            publish_date=publish_date,
-            program_type=final_program_type,
-            year=_parse_int(extracted.get("year")),
-            target_degree=extracted.get("target_degree"),
-            disciplines=extracted.get("disciplines"),
-            quota=extracted.get("quota"),
-            requirements=extracted.get("requirements"),
-            registration_start=reg_start,
-            registration_end=reg_end,
-            camp_start=camp_start,
-            camp_end=camp_end,
-            registration_url=extracted.get("registration_url"),
-            contact=extracted.get("contact"),
-            summary=extracted.get("summary"),
-            raw_content=content[:10000],
-            images=images[:20] if images else None,
-            raw_html_path=snapshot_path,
-            llm_model="Qwen/Qwen2.5-32B-Instruct",
-            llm_confidence=confidence,
-            relevance_score=score,
-            status="pending" if confidence < 0.7 else "published",
-        )
-
-        session.add(notice)
-        # flush入库（带重试，处理database is locked）
-        for attempt in range(3):
-            try:
-                await session.flush()
-                break
-            except Exception as flush_err:
-                if attempt < 2:
-                    logger.warning(f"入库flush重试({attempt+1}/3): {title} - {flush_err}")
-                    try:
-                        session.expunge(notice)
-                    except Exception:
-                        pass
-                    import asyncio as _asyncio
-                    await _asyncio.sleep(1)
-                    session.add(notice)
-                else:
-                    logger.error(f"入库flush最终失败: {title} - {flush_err}")
-                    try:
-                        session.expunge(notice)
-                    except Exception:
-                        pass
-                    return None
-
-        logger.info(
-            f"✅ 通知入库: {title} (ID={notice.id}, "
-            f"type={notice.program_type}, confidence={confidence:.2f})"
-        )
-        return notice
+        # 10. 返回准备好的字段 dict（DB 写入由 _store_notice 串行执行）
+        return {
+            "university_id": university_id,
+            "department_id": department_id,
+            "source_id": source_id,
+            "title": _clean_title(title),
+            "source_url": url,
+            "publish_date": publish_date,
+            "program_type": final_program_type,
+            "year": _parse_int(extracted.get("year")),
+            "target_degree": extracted.get("target_degree"),
+            "disciplines": extracted.get("disciplines"),
+            "quota": extracted.get("quota"),
+            "requirements": extracted.get("requirements"),
+            "registration_start": reg_start,
+            "registration_end": reg_end,
+            "camp_start": camp_start,
+            "camp_end": camp_end,
+            "registration_url": extracted.get("registration_url"),
+            "contact": extracted.get("contact"),
+            "summary": extracted.get("summary"),
+            "raw_content": content[:10000],
+            "images": images[:20] if images else None,
+            "raw_html_path": snapshot_path,
+            "llm_confidence": confidence,
+            "relevance_score": score,
+            "status": "pending" if confidence < 0.7 else "published",
+            "_orig_title": title,  # 仅供日志
+        }
 
     except Exception as e:
         logger.error(f"处理通知异常: {title} - {e}")
+        return None
+
+
+async def _store_notice(prepared: dict, session: AsyncSession) -> Optional[AdmissionNotice]:
+    """DB 阶段（必须串行）：构建对象 + 入库 flush（带重试，处理 database is locked）。"""
+    if not prepared:
+        return None
+    title = prepared.get("_orig_title", prepared.get("title", ""))
+    notice = AdmissionNotice(
+        university_id=prepared["university_id"],
+        department_id=prepared["department_id"],
+        source_id=prepared["source_id"],
+        title=prepared["title"],
+        source_url=prepared["source_url"],
+        publish_date=prepared["publish_date"],
+        program_type=prepared["program_type"],
+        year=prepared["year"],
+        target_degree=prepared["target_degree"],
+        disciplines=prepared["disciplines"],
+        quota=prepared["quota"],
+        requirements=prepared["requirements"],
+        registration_start=prepared["registration_start"],
+        registration_end=prepared["registration_end"],
+        camp_start=prepared["camp_start"],
+        camp_end=prepared["camp_end"],
+        registration_url=prepared["registration_url"],
+        contact=prepared["contact"],
+        summary=prepared["summary"],
+        raw_content=prepared["raw_content"],
+        images=prepared["images"],
+        raw_html_path=prepared["raw_html_path"],
+        llm_model="Qwen/Qwen2.5-32B-Instruct",
+        llm_confidence=prepared["llm_confidence"],
+        relevance_score=prepared["relevance_score"],
+        status=prepared["status"],
+    )
+    session.add(notice)
+    # flush入库（带重试，处理database is locked）
+    for attempt in range(3):
+        try:
+            await session.flush()
+            break
+        except Exception as flush_err:
+            if attempt < 2:
+                logger.warning(f"入库flush重试({attempt+1}/3): {title} - {flush_err}")
+                try:
+                    session.expunge(notice)
+                except Exception:
+                    pass
+                await asyncio.sleep(1)
+                session.add(notice)
+            else:
+                logger.error(f"入库flush最终失败: {title} - {flush_err}")
+                try:
+                    session.expunge(notice)
+                except Exception:
+                    pass
+                return None
+
+    logger.info(
+        f"✅ 通知入库: {title} (ID={notice.id}, "
+        f"type={notice.program_type}, confidence={notice.llm_confidence:.2f})"
+    )
+    return notice
+
+
+async def process_notice(
+    item: dict,
+    session: AsyncSession,
+    university_id: int,
+    department_id: Optional[int] = None,
+    source_id: Optional[int] = None,
+) -> Optional[AdmissionNotice]:
+    """处理单条通知：prepare（网络/CPU）+ store（DB）串行。
+
+    兼容旧入口（validate_process_notice 等直接调用）。批量场景由
+    NoticeProcessor 走并发 prepare + 串行 store 的更快路径。
+    """
+    try:
+        prepared = await _prepare_notice(item, university_id, department_id, source_id)
+        if not prepared:
+            return None
+        return await _store_notice(prepared, session)
+    except Exception as e:
+        logger.error(f"处理通知异常: {item.get('title', '?')} - {e}")
         return None
 
 
