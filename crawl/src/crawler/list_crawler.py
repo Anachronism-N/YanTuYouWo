@@ -142,6 +142,7 @@ async def crawl_source(
         if page_urls:
             logger.info(f"检测到 {len(page_urls)} 个分页链接，开始翻页爬取（最多 {max_pages - 1} 页）")
             pages_crawled = 1  # 已爬取第一页
+            consecutive_fail = 0  # 连续失败计数（用于判定到达分页末尾）
 
             for page_url in page_urls[:max_pages - 1]:
                 pages_crawled += 1
@@ -149,14 +150,26 @@ async def crawl_source(
 
                 page_html = await http_client.fetch(page_url)
                 if not page_html:
-                    logger.debug(f"  第 {pages_crawled} 页请求失败，停止翻页")
-                    break
+                    # 单页失败可能是瞬时网络问题：跳过该页继续后续页，
+                    # 连续 2 页失败才认为到达分页末尾（避免无限尝试空页）
+                    consecutive_fail += 1
+                    logger.debug(f"  第 {pages_crawled} 页请求失败（连续 {consecutive_fail} 次）")
+                    if consecutive_fail >= 2:
+                        logger.debug(f"  连续 2 页失败，停止翻页")
+                        pages_crawled -= 1  # 末统计这页
+                        break
+                    continue
 
                 page_items = notice_list_parser.parse(page_html, page_url, source.parser_config)
                 if not page_items:
-                    logger.debug(f"  第 {pages_crawled} 页解析为空，停止翻页")
-                    break
+                    consecutive_fail += 1
+                    logger.debug(f"  第 {pages_crawled} 页解析为空（连续 {consecutive_fail} 次）")
+                    if consecutive_fail >= 2:
+                        pages_crawled -= 1
+                        break
+                    continue
 
+                consecutive_fail = 0  # 成功则重置
                 all_items.extend(page_items)
                 logger.debug(f"  第 {pages_crawled} 页: {len(page_items)} 条")
 
