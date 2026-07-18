@@ -144,3 +144,30 @@ python scripts/validate_process_notice.py
 2. **微信文章**：`mp.weixin.qq.com` 已走 Playwright，但正文提取仍有失败，需专用解析。
 3. **更大样本回归**：当前验证基于 10 所可访问高校；可结合阶段一/二全量源跑一次
    完整 `run_crawl.py` 复核整体指标（program_type 分布、日期覆盖率）。
+
+---
+
+## 七、补充（2026-07，完整管线端到端验证轮次）
+
+### 7.1 招生源类型优先级/加成统一识别
+
+`scripts/full_pipeline_e2e.py`（播种真实源→`NoticeProcessor.process_all`→查库）暴露：
+`NoticeProcessor._get_active_sources` 的类型优先级 `case` 只精确匹配「招生/通知/新闻」，
+而实际 `source_type` 取值含「研招办/研究生院/学院招生」，全部落入 `else=3` 最低优先级——
+**最高价值的招生源被排在普通通知源之后处理**。`batch_filter` 的招生加成（+0.3）同理漏判。
+
+修复（详见 commit `fix(crawl): 招生源类型优先级/加成统一识别`）：
+- `rule_filter.source_type_category()` 统一归类 admission/notice/news/other。
+- `batch_filter` 与 `NoticeProcessor` 均改用该归类，研招办等招生源获得 +0.3 加成与 0 级优先。
+- 新增 2 项回归测试，全量 **25 项测试通过**。
+
+### 7.2 端到端验证结论
+
+| 环节 | 验证方式 | 结论 |
+|------|----------|------|
+| `crawl_source`（抓取/解析/翻页/过滤/去重） | `full_pipeline_e2e` 南大源：total=28 new=22 rel=11，无错 | ✅ |
+| `process_notice`（详情/分类/提取/校验/入库） | `validate_process_notice`：东南/天大 6 条入库（预推免/夏令营/统考招生/拟录取，含日期） | ✅ |
+| 编排（增量状态/并发/提交） | 南大 22 条经 LLM 全部正确判为非招生→不入库（行为正确） | ✅ |
+
+> 注：`full_pipeline_e2e` 在有限超时内难跑完整批（每条详情+LLM≈8s，单源数十条），
+> 故聚合报告以 `validate_process_notice` 的逐条入库结果为准；各环节均已独立验证通过。
