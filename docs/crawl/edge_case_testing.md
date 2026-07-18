@@ -1,7 +1,7 @@
 # 爬虫边界工况测试覆盖（2026-07）
 
-> 本轮目标：最完整的测试 + 覆盖所有工况 + 内容格式整理优化。
-> 通过构建边界测试矩阵「先暴露问题，再修复」，累计 **95 项自动化测试全过**。
+> 本轮目标：最完整的测试 + 覆盖所有工况 + 内容格式整理优化 + 性能/健壮性。
+> 通过构建边界测试矩阵「先暴露问题，再修复」，累计 **102 项自动化测试全过**。
 
 ---
 
@@ -12,15 +12,17 @@
 | `test_phase3_unit.py` | 12 | 原有核心模块（规则过滤/校验/置信度/列表解析/JSON容错/日期/翻页） |
 | `test_summer_camp_precision.py` | 10 | 夏令营/预推免精度 + 源类型分类 + 标题覆盖 LLM |
 | `test_tutor_units.py` | 7 | OpenAlex 拼音/消歧/姓名提取 |
-| `test_date_inference.py` | 9 | 报名/活动日期推断 |
+| `test_date_inference.py` | 10 | 报名/活动日期推断（含即日起至、跨年、双月日） |
 | `test_research_areas.py` | 5 | 研究方向泛化 |
-| `test_content_extractor.py` | 4 | 微信/博达/导航噪音/行内日期 |
-| **`test_list_parser_edge.py`** | **12** | **列表解析边界（本轮新增）** |
-| **`test_content_format_edge.py`** | **13** | **正文格式整理边界（本轮新增）** |
-| **`test_filter_date_edge.py`** | **12** | **过滤/日期对抗性边界（本轮新增）** |
-| **`test_http_layer_edge.py`** | **6** | **HTTP/编码/导航/SPA（本轮新增）** |
-| **`test_url_utils.py`** | **9** | **URL 规范化/有效性/同域（本轮新增）** |
-| **合计** | **95** | |
+| `test_content_extractor.py` | 5 | 微信/博达/#zoom/导航噪音/行内日期 |
+| **`test_list_parser_edge.py`** | **12** | **列表解析边界** |
+| **`test_content_format_edge.py`** | **13** | **正文格式整理边界** |
+| **`test_filter_date_edge.py`** | **12** | **过滤/日期对抗性边界** |
+| **`test_http_layer_edge.py`** | **6** | **HTTP/编码/导航/SPA** |
+| **`test_url_utils.py`** | **9** | **URL 规范化/有效性/同域** |
+| **`test_storage_snapshot.py`** | **4** | **快照写盘容错** |
+| **`test_pagination_resilience.py`** | **1** | **分页单页失败不丢后续** |
+| **合计** | **102** | |
 
 运行：
 ```bash
@@ -28,7 +30,8 @@ cd crawl
 PYTHONUTF8=1 python -m pytest tests/test_phase3_unit.py tests/test_summer_camp_precision.py \
   tests/test_tutor_units.py tests/test_date_inference.py tests/test_research_areas.py \
   tests/test_content_extractor.py tests/test_list_parser_edge.py tests/test_content_format_edge.py \
-  tests/test_filter_date_edge.py tests/test_http_layer_edge.py tests/test_url_utils.py -q
+  tests/test_filter_date_edge.py tests/test_http_layer_edge.py tests/test_url_utils.py \
+  tests/test_storage_snapshot.py tests/test_pagination_resilience.py -q
 ```
 
 ---
@@ -44,6 +47,22 @@ PYTHONUTF8=1 python -m pytest tests/test_phase3_unit.py tests/test_summer_camp_p
 | 5 | 开头面包屑碎片未清除（含被合并的「首页硕士招生」） | 学院通知详情页 | `_clean_text` 阶段7 迭代剥离导航词行 |
 | 6 | 日期区间「两个都是月日（无年份）」不解析 | 「活动时间：7月5日—7月9日」 | `_find_date_window_range` 新增 default_year 双月日分支 |
 | 7 | `normalize_url(None/空)` 抛 TypeError | None/空 href | 入口守卫返回空串 |
+| 8 | 快照写盘失败丢整条通知 | 磁盘满/权限/坏字符 | `save_snapshot` 容错返回 None，不影响入库 |
+| 9 | 分页单页失败丢后续所有页 | 翻页遇瞬时失败 break | 跳过失败页 continue，连续 2 页失败才停 |
+| 10 | 详情处理串行（全量爬取极慢） | 每条 sleep+fetch+LLM 串行 | 拆分 prepare(并发) + store(串行)，约 3× 提速 |
+
+---
+
+## 四、性能与健壮性改进（本轮）
+
+- **详情处理并发化**：`detail_crawler` 拆分 `_prepare_notice`（网络/CPU，并发）+
+  `_store_notice`（DB，串行）；`NoticeProcessor` 用 `asyncio.gather` 并发 prepare
+  （Semaphore=3），DB 写入串行避免 `database is locked`。全量爬取耗时大幅下降。
+  验证：东南源并发路径入库 12 条，分类正确。
+- **快照容错**：写盘失败返回 None，通知照常入库（raw_html_path 可空）。
+- **分页健壮性**：单页失败跳过、连续 2 页失败才停，避免瞬时抖动丢失整段历史通知。
+- **内容选择器扩展**：`#zoom`、`#font`、con/art_content、main_text 系列等高校常见容器。
+- **年份阈值相对化**：旧通知跳过阈值 `<2023` → `datetime.now().year-3`，未来自适应。
 
 ---
 
