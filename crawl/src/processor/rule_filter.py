@@ -45,6 +45,8 @@ def relevance_score(title: str) -> float:
         相关性评分 (0.0 ~ 2.0+)
     """
     score = 0.0
+    if not isinstance(title, str):
+        return 0.0
     title_stripped = title.strip()
     title_len = len(title_stripped)
 

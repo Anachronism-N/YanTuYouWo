@@ -117,7 +117,6 @@ def _find_date_window_range(
         # 一个完整日期 + 一个月日
         if len(fulls) == 1:
             s = _safe_date(int(fulls[0][1]), int(fulls[0][2]), int(fulls[0][3]))
-            # 在第一个日期之后找月日
             tail = window[fulls[0].end():]
             md = _MD_DATE_RE.search(tail)
             if md:
@@ -125,6 +124,14 @@ def _find_date_window_range(
                 if s and e and e >= s:
                     return s, e
             return s, None
+        # 两个都是月日（无年份）：用 default_year 补全
+        if len(fulls) == 0:
+            mds = list(_MD_DATE_RE.finditer(window))
+            if len(mds) >= 2:
+                s = _safe_date(default_year, int(mds[0][1]), int(mds[0][2]))
+                e = _safe_date(default_year, int(mds[1][1]), int(mds[1][2]))
+                if s and e and e >= s:
+                    return s, e
     return None, None
 
 
