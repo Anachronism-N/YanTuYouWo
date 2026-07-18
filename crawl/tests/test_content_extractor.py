@@ -46,6 +46,21 @@ def test_boda_cms_vsb_content():
     print("  ✅ 博达站群 vsb_content")
 
 
+def test_zoom_selector():
+    """#zoom 是大量高校详情页的主内容容器"""
+    html = """<html><body>
+    <div class="header">导航菜单链接</div>
+    <div id="zoom">
+      <p>为促进全国高校优秀大学生之间的学术交流，我院拟于2026年7月举办优秀大学生暑期夏令营活动。</p>
+      <p>活动时间：2026年7月5日至7月9日。地点：本校。欢迎全国各高校优秀本科生报名参加。</p>
+    </div>
+    <div class="footer">版权所有技术支持</div></body></html>"""
+    text = extract_content(html)
+    assert "暑期夏令营" in text
+    assert "2026年7月5日" in text
+    assert "导航菜单" not in text  # header 在 #zoom 外，不应进入正文
+    print("  ✅ #zoom 选择器（高校详情页常见）")
+
 def test_strip_nav_noise():
     """面包屑/导航/页脚噪音应被剥离"""
     html = """<html><body>
@@ -74,6 +89,7 @@ if __name__ == "__main__":
     print("=== 正文提取器测试 ===")
     test_wechat_article_extraction()
     test_boda_cms_vsb_content()
+    test_zoom_selector()
     test_strip_nav_noise()
     test_inline_elements_not_split()
     print("\n🎉 所有正文提取测试通过!")

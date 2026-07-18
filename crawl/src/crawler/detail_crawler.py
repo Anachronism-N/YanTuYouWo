@@ -36,13 +36,14 @@ async def _prepare_notice(
     logger.info(f"处理通知: [{score:.2f}] {title}")
 
     try:
-        # 0. 快速跳过旧通知（2020年之前的通知大概率不是当前有效的推免信息）
+        # 0. 快速跳过旧通知（早于当前年-3 年的通知大概率已失效）
         notice_date = item.get("date", "")
         if notice_date:
             try:
                 year = int(notice_date[:4])
-                if year < 2023:
-                    logger.debug(f"跳过旧通知({year}年): {title}")
+                min_year = datetime.now().year - 3
+                if year < min_year:
+                    logger.debug(f"跳过旧通知({year}年<{min_year}): {title}")
                     return None
             except (ValueError, IndexError):
                 pass

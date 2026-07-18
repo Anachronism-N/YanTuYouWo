@@ -124,6 +124,11 @@ def _find_main_content(soup: BeautifulSoup) -> Tag:
         {"id": "vsb_content"},
         {"class_": "TRS_Editor"},
         {"class_": "news_content"},
+        # 常见中文高校 CMS 主内容容器
+        {"id": "zoom"},  # 大量高校详情页用 #zoom
+        {"id": "font"},
+        {"class_": re.compile(r"^(con|art)[-_]?(content|text|con)$", re.I)},  # con_content/art_con
+        {"class_": re.compile(r"^main[-_]?(text|txt|con|content)$", re.I)},
         {"class_": re.compile(r"^arc[-_]?con$", re.I)},
         {"class_": re.compile(r"^article[-_]?txt$", re.I)},
         {"class_": re.compile(r"^wp[-_]?article[-_]?content$", re.I)},
