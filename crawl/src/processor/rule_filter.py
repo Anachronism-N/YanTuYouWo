@@ -6,6 +6,29 @@ import re
 from loguru import logger
 
 
+def source_type_category(source_type: str | None) -> str:
+    """把信息源类型归一到 admission / notice / news / other 四类。
+
+    实际系统里的 source_type 取值多样（招生、学院招生、研招办、研究生院、
+    学院通知、通知、新闻、新闻动态 …）。早期代码只精确匹配「招生/通知/新闻」，
+    导致「研招办/研究生院/学院招生」这类**最高价值的招生源**被当成最低优先级、
+    也拿不到 batch_filter 的招生加成。本函数统一识别。
+    """
+    if not source_type:
+        return "other"
+    st = source_type.strip()
+    # 招生类：招生 / 学院招生 / 研招办 / 研究生院 / 招生就业 / 招生信息 等
+    if ("招生" in st) or ("研招" in st) or ("研究生院" in st):
+        return "admission"
+    # 通知类：通知 / 学院通知 / 公告 / 通知公告
+    if ("通知" in st) or ("公告" in st):
+        return "notice"
+    # 新闻类：新闻 / 学院新闻 / 新闻动态 / 动态
+    if ("新闻" in st) or ("动态" in st):
+        return "news"
+    return "other"
+
+
 def relevance_score(title: str) -> float:
     """
     基于关键词权重的相关性评分。
@@ -236,11 +259,12 @@ def batch_filter(
     Returns:
         添加了 relevance_score 字段的条目列表（已按评分降序排列）
     """
-    # 招生类信息源给予额外基础分
+    # 招生类信息源给予额外基础分（统一识别 admission 类型）
+    category = source_type_category(source_type)
     type_bonus = 0.0
-    if source_type == "招生":
+    if category == "admission":
         type_bonus = 0.3
-    elif source_type == "通知":
+    elif category == "notice":
         type_bonus = 0.1
 
     scored_items = []

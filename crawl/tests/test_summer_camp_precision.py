@@ -15,7 +15,37 @@ from loguru import logger
 logger.remove()
 logger.add(sys.stderr, level="WARNING")
 
-from src.processor.rule_filter import relevance_score, infer_program_type, batch_filter
+from src.processor.rule_filter import relevance_score, infer_program_type, batch_filter, source_type_category
+
+
+def test_source_type_category():
+    """招生源类型统一识别：研招办/研究生院/学院招生 都应归 admission"""
+    assert source_type_category("招生") == "admission"
+    assert source_type_category("学院招生") == "admission"
+    assert source_type_category("研招办") == "admission"
+    assert source_type_category("研究生院") == "admission"
+    assert source_type_category("招生就业") == "admission"
+    assert source_type_category("通知") == "notice"
+    assert source_type_category("学院通知") == "notice"
+    assert source_type_category("公告") == "notice"
+    assert source_type_category("新闻") == "news"
+    assert source_type_category("新闻动态") == "news"
+    assert source_type_category("其他") == "other"
+    assert source_type_category(None) == "other"
+    print("  ✅ source_type_category 统一识别招生源")
+
+
+def test_admission_source_bonus_applies_to_yzb():
+    """研招办源应获得招生加成（修复前只有精确 '招生' 才加成）"""
+    def _items():
+        return [{"title": "2027年接收推荐免试研究生报名通知", "url": "http://a/1"}]
+    # 每次用独立 dict（batch_filter 会原地写 relevance_score）
+    r_yzb = batch_filter(_items(), source_type="研招办")
+    r_zs = batch_filter(_items(), source_type="招生")
+    r_none = batch_filter(_items(), source_type=None)
+    assert r_yzb[0]["relevance_score"] == r_zs[0]["relevance_score"], "研招办应与招生同等待遇"
+    assert r_yzb[0]["relevance_score"] > r_none[0]["relevance_score"], "招生源应有加成"
+    print("  ✅ 研招办源获得招生加成")
 
 
 # ========== 真阳性：夏令营/预推免（应高分 + 正确类型）==========
@@ -153,6 +183,8 @@ def test_title_overrides_llm_misclassification():
 
 if __name__ == "__main__":
     print("=== 夏令营/预推免精度回归测试 ===")
+    test_source_type_category()
+    test_admission_source_bonus_applies_to_yzb()
     test_summer_camp_detection()
     test_pre_admission_detection()
     test_tuimian_admission_list()

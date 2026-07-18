@@ -317,14 +317,16 @@ class NoticeProcessor:
         if source_type:
             query = query.where(DepartmentSource.source_type == source_type)
 
-        # 按优先级排序
-        # 按优先级排序：招生类型优先，然后通知，最后新闻
+        # 按优先级排序：招生类（招生/研招办/研究生院/学院招生…）优先，然后通知，最后新闻
+        # 注意：source_type 取值多样，必须用模糊匹配识别招生源，否则「研招办」这类
+        # 高价值招生源会落入 else=3 最低优先级（曾因此被排在普通通知源之后处理）。
         # 同类型内按 priority 字段排序
         from sqlalchemy import case
+        st = DepartmentSource.source_type
         type_priority = case(
-            (DepartmentSource.source_type == "招生", 0),
-            (DepartmentSource.source_type == "通知", 1),
-            (DepartmentSource.source_type == "新闻", 2),
+            (st.like("%招生%") | st.like("%研招%") | st.like("%研究生院%"), 0),
+            (st.like("%通知%") | st.like("%公告%"), 1),
+            (st.like("%新闻%") | st.like("%动态%"), 2),
             else_=3,
         )
         query = query.order_by(type_priority, DepartmentSource.priority)
