@@ -56,6 +56,10 @@ class NoticeListParser:
         Returns:
             通知条目列表
         """
+        # 入口守卫：None / 非字符串 / 过短内容直接返回空，避免 BeautifulSoup 抛异常
+        if not isinstance(html, str) or len(html) < 100:
+            return []
+
         # 策略 0：自定义配置
         if parser_config:
             result = self._try_custom_config(html, url, parser_config)
