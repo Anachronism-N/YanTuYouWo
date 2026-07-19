@@ -34,6 +34,9 @@ async def search(
                 AdmissionNotice.title.contains(keyword),
                 AdmissionNotice.summary.contains(keyword),
                 AdmissionNotice.requirements.contains(keyword),
+                # 纳入正文：用户常按学科/院系/方向等正文关键词检索
+                # （如"计算机科学与技术"出现在正文/表格里也能命中）
+                AdmissionNotice.raw_content.contains(keyword),
             ))
         )
         subqueries.append(notice_q)

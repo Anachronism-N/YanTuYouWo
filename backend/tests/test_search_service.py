@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 os.environ.setdefault("PYTHONUTF8", "1")
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy import select
 from src.models.base import Base
 from src.models.notice import AdmissionNotice
 from src.models.university import University
@@ -65,6 +66,28 @@ async def test_search_finds_keyword_in_disciplines():
         await engine.dispose()
 
 
+async def test_search_finds_keyword_in_raw_content():
+    """关键词只出现在正文（如学科名在表格/正文里）也应命中"""
+    engine, Session = await _setup()
+    try:
+        async with Session() as s:
+            # 插一条关键词只在 raw_content 的通知
+            u = (await s.execute(select(University))).scalars().first()
+            s.add(AdmissionNotice(
+                university_id=u.id, title="某通知", source_url="http://t/c",
+                summary="普通摘要", requirements="无",
+                raw_content="本通知面向计算机科学与技术、人工智能等专业本科生。",
+                program_type="夏令营",
+            ))
+            await s.commit()
+            r = await search(s, keyword="计算机科学与技术", type="notice")
+            titles = [it["title"] for it in r["items"]]
+            assert "某通知" in titles, f"应在 raw_content 命中: {titles}"
+        print("[OK] raw_content 正文命中（学科检索）")
+    finally:
+        await engine.dispose()
+
+
 async def test_search_still_matches_title():
     engine, Session = await _setup()
     try:
@@ -90,6 +113,7 @@ async def test_search_no_match_returns_empty():
 async def main():
     print("=== 后端搜索服务测试 ===")
     await test_search_finds_keyword_in_requirements()
+    await test_search_finds_keyword_in_raw_content()
     await test_search_still_matches_title()
     await test_search_no_match_returns_empty()
     print("\n[PASS] 所有搜索测试通过!")
