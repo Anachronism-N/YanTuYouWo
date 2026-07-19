@@ -179,6 +179,24 @@ def _smart_get_text(element: Tag) -> str:
             parts.append("\n")
             return
 
+        # 表格特殊处理：同行单元格用空格连接、行末换行。
+        # 否则每个 <td> 单独成行，再被短行合并拼成"001建筑学院7月..."的乱码 blob
+        # （如东南推免汇总页的院系/时间表）。
+        if tag_name in ("td", "th"):
+            for child in node.children:
+                _walk(child)
+            if parts and not parts[-1].endswith(("\n", " ")):
+                parts.append(" ")
+            return
+        if tag_name == "tr":
+            if parts and parts[-1] not in ("\n", " "):
+                parts.append("\n")
+            for child in node.children:
+                _walk(child)
+            if parts and parts[-1] not in ("\n",):
+                parts.append("\n")
+            return
+
         is_block = tag_name not in _INLINE_TAGS
 
         if is_block and parts and parts[-1] != "\n":

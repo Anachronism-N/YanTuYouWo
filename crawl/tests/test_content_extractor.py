@@ -85,6 +85,23 @@ def test_inline_elements_not_split():
     print("  ✅ 行内日期不被换行拆散")
 
 
+def test_table_preserves_rows():
+    """表格应保留行列结构（同行单元格空格连、行末换行），而非拼成 blob"""
+    html = """<html><body><div class="news_content"><table>
+    <tr><td>院系代码</td><td>院系名称</td><td>报名时间</td></tr>
+    <tr><td>001</td><td>建筑学院</td><td>7月10日-7月31日</td></tr>
+    <tr><td>002</td><td>机械工程学院</td><td>7月9日-8月10日</td></tr>
+    </table></div></body></html>"""
+    text = extract_content(html)
+    # 每行应独立成行（不被短行合并拼成一坨）
+    lines = [l for l in text.split("\n") if l.strip()]
+    assert any("001" in l and "建筑学院" in l for l in lines), f"行未保留: {lines}"
+    assert any("002" in l and "机械工程学院" in l for l in lines), f"行未保留: {lines}"
+    # 不应是 "001建筑学院002机械工程学院" 这样全部粘一起
+    assert "001建筑学院002" not in text.replace(" ", "")
+    print("  ✅ 表格保留行列结构（不拼成 blob）")
+
+
 if __name__ == "__main__":
     print("=== 正文提取器测试 ===")
     test_wechat_article_extraction()
@@ -92,4 +109,5 @@ if __name__ == "__main__":
     test_zoom_selector()
     test_strip_nav_noise()
     test_inline_elements_not_split()
+    test_table_preserves_rows()
     print("\n🎉 所有正文提取测试通过!")
