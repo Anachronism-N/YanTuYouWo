@@ -352,8 +352,16 @@ def _validate_and_fix(extracted: dict, title: str, list_date: str | None) -> dic
     # 确保 disciplines 是列表
     if extracted.get("disciplines") and not isinstance(extracted["disciplines"], list):
         extracted["disciplines"] = [str(extracted["disciplines"])]
-    # disciplines 如果是 "null" 字符串，置空
-    if extracted.get("disciplines") == "null" or extracted.get("disciplines") == ["null"]:
+    # disciplines：过滤列表内每个 null/None/空/"null" 字符串元素（LLM 常返回 ["null"] 或混入）
+    disc = extracted.get("disciplines")
+    if isinstance(disc, list):
+        cleaned_disc = [
+            d.strip() for d in disc
+            if isinstance(d, str) and d.strip()
+            and d.strip().lower() not in ("null", "none", "n/a", "无", "[]")
+        ]
+        extracted["disciplines"] = cleaned_disc if cleaned_disc else None
+    elif isinstance(disc, str) and disc.strip().lower() in ("null", "none", "n/a", "[]"):
         extracted["disciplines"] = None
 
     # 确保 contact 是字符串（LLM 可能返回列表）
