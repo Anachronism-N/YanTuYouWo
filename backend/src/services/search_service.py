@@ -33,6 +33,7 @@ async def search(
             .where(or_(
                 AdmissionNotice.title.contains(keyword),
                 AdmissionNotice.summary.contains(keyword),
+                AdmissionNotice.requirements.contains(keyword),
             ))
         )
         subqueries.append(notice_q)
