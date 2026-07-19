@@ -66,6 +66,33 @@ def is_same_domain(url1: str, url2: str) -> bool:
     return get_domain(url1) == get_domain(url2)
 
 
+def url_dedup_key(url: str) -> str:
+    """生成 URL 去重键：忽略 scheme(http/https)、www、尾斜杠、fragment，query 排序。
+
+    用于「同一页面经 http 与 https 各采一次」这类重复的去重。
+    例：https://a.edu/x.htm 与 http://a.edu/x.htm → 同一键。
+    """
+    if not isinstance(url, str) or not url:
+        return ""
+    try:
+        p = urlparse(url)
+    except Exception:
+        return url.lower()
+    host = (p.netloc or "").lower()
+    # 去 www 前缀（www.a.edu 与 a.edu 视为同一站点）
+    if host.startswith("www."):
+        host = host[4:]
+    # 路径去尾斜杠（根路径保留 /）
+    path = p.path.rstrip("/") or "/"
+    # query 排序
+    if p.query:
+        params = parse_qs(p.query, keep_blank_values=True)
+        query = urlencode(sorted(params.items()), doseq=True)
+    else:
+        query = ""
+    return f"{host}{path}|{query}"
+
+
 def is_valid_url(url: str) -> bool:
     """判断是否为有效的 HTTP(S) URL"""
     try:

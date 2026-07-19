@@ -175,12 +175,14 @@ async def crawl_source(
 
             logger.info(f"翻页爬取完成: 共 {pages_crawled} 页, {len(all_items)} 条")
 
-        # 4. 全局去重（按URL）
-        seen_urls = set()
+        # 4. 全局去重（按 URL 去重键，http/https/www/尾斜杠 视为同页）
+        from src.utils.url_utils import url_dedup_key
+        seen_keys = set()
         unique_items = []
         for item in all_items:
-            if item["url"] not in seen_urls:
-                seen_urls.add(item["url"])
+            key = url_dedup_key(item["url"])
+            if key not in seen_keys:
+                seen_keys.add(key)
                 unique_items.append(item)
 
         log.total_items = len(unique_items)
@@ -282,20 +284,33 @@ async def _deduplicate(
     if not items:
         return []
 
+    from src.utils.url_utils import url_dedup_key
+
+    # 同批次内先按去重键去重（防止本批里 http/https 同页重复）
+    seen_keys: set[str] = set()
+    unique_batch: list[dict] = []
+    for item in items:
+        key = url_dedup_key(item["url"])
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        unique_batch.append(item)
+    items = unique_batch
+
     urls = [item["url"] for item in items]
 
-    # 查询已存在的 URL
+    # 查询已存在的 URL，按「去重键」判定（http/https/www/尾斜杠 视为同页）
     result = await session.execute(
         select(AdmissionNotice.source_url).where(
             AdmissionNotice.source_url.in_(urls)
         )
     )
-    existing_urls = {row[0] for row in result.fetchall()}
+    existing_keys = {url_dedup_key(row[0]) for row in result.fetchall()}
 
-    new_items = [item for item in items if item["url"] not in existing_urls]
+    new_items = [item for item in items if url_dedup_key(item["url"]) not in existing_keys]
 
-    if existing_urls:
-        logger.debug(f"去重: {len(existing_urls)} 条已存在, {len(new_items)} 条新增")
+    if existing_keys:
+        logger.debug(f"去重: {len(existing_keys)} 个键已存在, {len(new_items)} 条新增")
 
     return new_items
 
