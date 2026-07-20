@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+import os
+import sys
+from pathlib import Path
+
+# 确保crawl/ 根目录在 sys.path，无论从哪个 CWD 启动
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from loguru import logger
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from src.config import settings
 from src.storage.database import init_db, async_session, close_db
@@ -51,6 +57,21 @@ async def run_phase1():
             name = uni_data["name"]
             logger.info(f"--- 处理高校: {name} ---")
 
+            # 断点续跑优化：已存在且已有院系的高校直接跳过（不重复抓取）
+            existing_uni = (await session.execute(
+                select(University).where(University.name == name)
+            )).scalar_one_or_none()
+            if existing_uni:
+                existing_dept_cnt = (await session.execute(
+                    select(func.count(Department.id)).where(
+                        Department.university_id == existing_uni.id
+                    )
+                )).scalar()
+                if existing_dept_cnt and existing_dept_cnt > 0:
+                    logger.info(f"已完成（{existing_dept_cnt} 院系），跳过: {name}")
+                    university = existing_uni
+                    continue
+
             # Step 2: 发现官网 URL
             homepage = await discover_homepage(name)
             if not homepage:
@@ -63,19 +84,26 @@ async def run_phase1():
             # Step 4: 发现院系列表页
             dept_list_url = await discover_dept_list_url(homepage, name)
 
-            # 创建高校记录
-            university = University(
-                name=name,
-                level="985",
-                province=UNIVERSITY_PROVINCES.get(name, ""),
-                homepage_url=homepage,
-                graduate_url=graduate_url,
-                dept_list_url=dept_list_url,
-                chsi_id=uni_data.get("chsi_id", ""),
-                auto_discovered=True,
-            )
-            session.add(university)
-            await session.flush()
+            # 创建高校记录（幂等：已存在则复用，支持断点续跑）
+            existing = (await session.execute(
+                select(University).where(University.name == name)
+            )).scalar_one_or_none()
+            if existing:
+                university = existing
+                logger.info(f"高校已存在，跳过创建: {name}")
+            else:
+                university = University(
+                    name=name,
+                    level="985",
+                    province=UNIVERSITY_PROVINCES.get(name, ""),
+                    homepage_url=homepage,
+                    graduate_url=graduate_url,
+                    dept_list_url=dept_list_url,
+                    chsi_id=uni_data.get("chsi_id", ""),
+                    auto_discovered=True,
+                )
+                session.add(university)
+                await session.flush()
 
             # Step 5: 提取学院 URL
             departments = []
@@ -96,20 +124,31 @@ async def run_phase1():
                     f"({coverage['matched']}/{coverage['total_chsi']})"
                 )
 
-            # Step 7: 学院数据入库
+            # Step 7: 学院数据入库（幂等：同校同名已存在则跳过，支持断点续跑）
+            new_depts = 0
             for dept_data in departments:
+                dname = dept_data["name"]
+                dup = (await session.execute(
+                    select(Department).where(
+                        Department.university_id == university.id,
+                        Department.name == dname,
+                    )
+                )).scalar_one_or_none()
+                if dup:
+                    continue
                 dept = Department(
                     university_id=university.id,
-                    name=dept_data["name"],
+                    name=dname,
                     homepage_url=dept_data.get("url"),
                     auto_discovered=True,
                     discovery_method="dept_list_page",
                 )
                 session.add(dept)
                 total_depts += 1
+                new_depts += 1
 
             await session.commit()
-            logger.info(f"{name}: 入库 {len(departments)} 个学院")
+            logger.info(f"{name}: 新增 {new_depts} 个学院（共发现 {len(departments)}）")
 
         logger.info(f"========== 阶段一完成: {len(university_data)} 所高校, {total_depts} 个学院 ==========")
 
