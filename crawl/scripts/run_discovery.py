@@ -159,79 +159,79 @@ async def run_phase2():
 
     对每个学院，自动定位其通知列表页 URL。
     """
-    logger.info("========== 阶段二：定位信息发布页 ==========")
+    logger.info("========== 阶段二：定位信息发布页（并发） ==========")
+
+    import asyncio as _aio
 
     async with async_session() as session:
-        # 获取所有学院
-        result = await session.execute(
-            select(Department).where(Department.is_active == True)
-        )
-        departments = result.scalars().all()
+        # 获取所有学院 + 高校信息（一次性预取，避免循环内反复查 DB）
+        rows = (await session.execute(
+            select(Department, University)
+            .join(University, Department.university_id == University.id)
+            .where(Department.is_active == True)
+        )).all()
 
-        logger.info(f"待处理学院数: {len(departments)}")
-
-        success_count = 0
-        fail_count = 0
-
-        for i, dept in enumerate(departments):
+        # 过滤：有 homepage_url 且尚无信息源（断点续跑）
+        todo = []
+        done_with_src = 0
+        for dept, university in rows:
             if not dept.homepage_url:
                 continue
-
-            # 断点续跑：已定位到信息源的学院跳过（不重复抓取）
-            existing_src_cnt = (await session.execute(
+            n_src = (await session.execute(
                 select(func.count(DepartmentSource.id)).where(
                     DepartmentSource.department_id == dept.id
                 )
             )).scalar()
-            if existing_src_cnt and existing_src_cnt > 0:
-                success_count += 1
+            if n_src and n_src > 0:
+                done_with_src += 1
                 continue
+            todo.append((dept.id, dept.homepage_url, dept.name, university.name))
 
-            # 获取高校信息
-            uni_result = await session.execute(
-                select(University).where(University.id == dept.university_id)
-            )
-            university = uni_result.scalar_one_or_none()
-            if not university:
-                continue
+        logger.info(f"待定位: {len(todo)} 个学院（已定位跳过 {done_with_src}）")
 
-            logger.info(f"[{i + 1}/{len(departments)}] {university.name} - {dept.name}")
+        sem = _aio.Semaphore(6)  # 并发定位上限（http_client 内部仍做域名级限流）
 
-            # 定位通知页
-            candidates = await locate_notice_pages(
-                dept.homepage_url,
-                dept.name,
-                university.name,
-            )
+        async def _locate(item):
+            dept_id, url, dept_name, uni_name = item
+            async with sem:
+                try:
+                    cands = await locate_notice_pages(url, dept_name, uni_name)
+                    return (dept_id, dept_name, cands)
+                except Exception as e:
+                    logger.debug(f"定位异常 {dept_name}: {e}")
+                    return (dept_id, dept_name, [])
 
+        success_count = 0
+        fail_count = 0
+        processed = 0
+        # 并发执行网络/分析阶段
+        results = await _aio.gather(*[_locate(it) for it in todo])
+        # 串行入库
+        for dept_id, dept_name, candidates in results:
+            processed += 1
             if candidates:
-                # 创建信息源记录（去重：同一学院不重复入库同一URL）
-                for j, candidate in enumerate(candidates[:5]):  # 最多保存 5 个
-                    existing = await session.execute(
+                for j, candidate in enumerate(candidates[:5]):
+                    dup = (await session.execute(
                         select(DepartmentSource).where(
-                            DepartmentSource.department_id == dept.id,
+                            DepartmentSource.department_id == dept_id,
                             DepartmentSource.source_url == candidate["url"],
                         )
-                    )
-                    if existing.scalar_one_or_none():
+                    )).scalar_one_or_none()
+                    if dup:
                         continue
-                    source = DepartmentSource(
-                        department_id=dept.id,
+                    session.add(DepartmentSource(
+                        department_id=dept_id,
                         source_url=candidate["url"],
                         source_type=candidate.get("type", "学院通知"),
                         priority=j + 1,
                         parser_type="auto",
-                    )
-                    session.add(source)
-
+                    ))
                 success_count += 1
-                logger.info(f"✅ 定位成功: {dept.name} → {len(candidates)} 个信息源")
+                logger.info(f"✅ 定位成功: {dept_name} → {len(candidates)} 源")
             else:
                 fail_count += 1
-                logger.warning(f"❌ 定位失败: {dept.name}")
-
-            # 每处理 10 个学院提交一次
-            if (i + 1) % 10 == 0:
+                logger.warning(f"❌ 定位失败: {dept_name}")
+            if processed % 20 == 0:
                 await session.commit()
 
         await session.commit()
