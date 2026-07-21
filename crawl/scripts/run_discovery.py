@@ -177,6 +177,16 @@ async def run_phase2():
             if not dept.homepage_url:
                 continue
 
+            # 断点续跑：已定位到信息源的学院跳过（不重复抓取）
+            existing_src_cnt = (await session.execute(
+                select(func.count(DepartmentSource.id)).where(
+                    DepartmentSource.department_id == dept.id
+                )
+            )).scalar()
+            if existing_src_cnt and existing_src_cnt > 0:
+                success_count += 1
+                continue
+
             # 获取高校信息
             uni_result = await session.execute(
                 select(University).where(University.id == dept.university_id)
