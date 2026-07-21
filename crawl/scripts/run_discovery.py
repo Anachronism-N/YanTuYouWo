@@ -190,12 +190,16 @@ async def run_phase2():
         logger.info(f"待定位: {len(todo)} 个学院（已定位跳过 {done_with_src}）")
 
         sem = _aio.Semaphore(6)  # 并发定位上限（http_client 内部仍做域名级限流）
+        # 定位是否启用慢策略（Playwright/LLM）。默认关闭=快速模式（只用快策略），
+        # 全量大规模定位时分钟级完成；需要更高召回时设 USE_LLM_LOCATE=1。
+        use_llm_locate = os.environ.get("USE_LLM_LOCATE", "0") == "1"
+        logger.info(f"定位模式: {'完整(LLM+Playwright)' if use_llm_locate else '快速(仅关键词/URL/路径猜测)'}")
 
         async def _locate(item):
             dept_id, url, dept_name, uni_name = item
             async with sem:
                 try:
-                    cands = await locate_notice_pages(url, dept_name, uni_name)
+                    cands = await locate_notice_pages(url, dept_name, uni_name, use_llm=use_llm_locate)
                     return (dept_id, dept_name, cands)
                 except Exception as e:
                     logger.debug(f"定位异常 {dept_name}: {e}")

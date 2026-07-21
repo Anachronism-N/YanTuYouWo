@@ -221,6 +221,8 @@ async def locate_notice_pages(
     dept_name: str,
     university_name: str,
     graduate_url: str | None = None,
+    *,
+    use_llm: bool = True,
 ) -> list[dict]:
     """
     六层策略级联定位学院的通知列表页。
@@ -274,7 +276,7 @@ async def locate_notice_pages(
             logger.warning(f"[策略2] {context} 异常: {e}")
 
     # ---- 策略 3：Playwright 渲染（仅在前两层无结果时） ----
-    if not all_candidates:
+    if use_llm and not all_candidates:
         logger.debug(f"[策略3] Playwright 渲染: {context}")
         try:
             result = await _strategy_playwright(dept_homepage)
@@ -285,7 +287,7 @@ async def locate_notice_pages(
             logger.warning(f"[策略3] {context} 异常: {e}")
 
     # ---- 策略 4：LLM 分析页面结构 ----
-    if not all_candidates:
+    if use_llm and not all_candidates:
         logger.debug(f"[策略4] LLM 分析: {context}")
         try:
             result = await _strategy_llm_analyze(dept_homepage, context)
