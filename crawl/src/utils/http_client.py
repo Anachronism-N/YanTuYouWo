@@ -28,7 +28,10 @@ class HttpClient:
 
     def __init__(self):
         self._client: Optional[httpx.AsyncClient] = None
-        self._semaphore = asyncio.Semaphore(settings.CRAWL_CONCURRENCY)
+        # 信号量延迟到首次使用时创建（绑定到实际运行的 event loop）。
+        # 在模块导入时创建会绑定到导入期的 loop，与 asyncio.run() 的 loop 不符，
+        # 并发下报 "Future attached to a different loop"。
+        self._semaphore: Optional[asyncio.Semaphore] = None
         self._domain_last_request: dict[str, float] = {}  # 域名 → 上次请求时间
         # 预检测 HTTP/2 支持：未安装 h2 时优雅降级到 HTTP/1.1，
         # 否则 httpx 会在每个请求上抛 ImportError 导致全部失败。
@@ -38,6 +41,12 @@ class HttpClient:
                 "未安装 h2 包，HTTP 客户端降级为 HTTP/1.1。"
                 "如需 HTTP/2，请执行: pip install 'httpx[http2]'"
             )
+
+    def _get_semaphore(self) -> asyncio.Semaphore:
+        """惰性创建信号量，绑定到当前运行的 event loop。"""
+        if self._semaphore is None:
+            self._semaphore = asyncio.Semaphore(settings.CRAWL_CONCURRENCY)
+        return self._semaphore
 
     async def _get_client(self) -> httpx.AsyncClient:
         """懒初始化 HTTP 客户端"""
@@ -102,7 +111,7 @@ class HttpClient:
 
         for attempt in range(max_retries + 1):
             try:
-                async with self._semaphore:
+                async with self._get_semaphore():
                     await self._rate_limit(domain)
 
                     client = await self._get_client()
@@ -262,7 +271,7 @@ class HttpClient:
 
         for attempt in range(max_retries + 1):
             try:
-                async with self._semaphore:
+                async with self._get_semaphore():
                     await self._rate_limit(domain)
                     client = await self._get_client()
                     response = await client.request("GET", url, headers=req_headers)
