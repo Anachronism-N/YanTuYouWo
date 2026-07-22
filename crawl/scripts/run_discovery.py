@@ -256,8 +256,14 @@ async def run_phase2():
 
 async def main():
     """运行完整的自动发现流程"""
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--phase2-only", action="store_true",
+                    help="跳过阶段一（研招网爬取很慢），直接定位通知页（阶段一已完成时用）")
+    args = ap.parse_args()
     try:
-        await run_phase1()
+        if not args.phase2_only:
+            await run_phase1()
         await run_phase2()
     finally:
         await http_client.close()
