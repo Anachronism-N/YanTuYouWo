@@ -97,7 +97,33 @@ cd frontend && corepack pnpm dev
 ## 五、当前进度（本会话）
 
 - 阶段一：**39 校 / 887 院系** 已入库。
-- 阶段二：进行中（断点续跑，为院系定位通知页）。
-- 阶段三：已用 17 个研招办源验证（37 条真实通知）；全量需阶段二完成后跑 run_crawl。
+- 阶段二：**57 个通知页源**已定位（招生26/通知15/新闻9/研招办7），覆盖 28 院系。
+- 阶段三：**63 条真实通知**入库，覆盖 9 校（北大25/东南15/重大6/天大5…），
+  含北大物理学院夏令营(conf=1.00)、北大推免复试名单/细则等。
 
-后续只需重复执行第三节的命令即可推进到完成——每步都支持中断续跑。
+### 实测可用的加速命令（关键）
+
+阶段二默认很慢（每院路径猜测+验证多次 fetch）。实测可用的快速组合：
+
+```bash
+# 阶段二（跳过慢的阶段一重建 + 快速模式 + 无频率延迟 + 并发）
+DATABASE_URL="sqlite+aiosqlite:///data/large_scale_test.db" \
+CRAWL_DELAY_MIN=0 CRAWL_DELAY_MAX=0.3 CRAWL_RETRY_TIMES=1 \
+PYTHONUTF8=1 python scripts/run_discovery.py --phase2-only
+# 需要更高召回（含 LLM 智能定位）加 USE_LLM_LOCATE=1，但慢很多
+
+# 阶段三爬取
+DATABASE_URL="sqlite+aiosqlite:///data/large_scale_test.db" \
+CRAWL_DELAY_MIN=0 CRAWL_DELAY_MAX=0.3 CRAWL_RETRY_TIMES=1 \
+PYTHONUTF8=1 python scripts/run_crawl.py --max-pages 2
+```
+
+每轮 590s 跑一批（断点续跑），重复执行即可推进。当前每轮阶段二约 +30~40 源。
+
+### 本轮修的关键 bug（让大规模可行）
+
+- **http_client 信号量 loop 绑定**：单例 __init__ 创建 Semaphore 绑定导入期 loop，
+  并发报 "attached to a different loop"。改为惰性创建（影响所有并发）。
+- **run_discovery 幂等+断点续跑**：校/院/源已存在则跳过，支持中断续跑。
+- **阶段二并发+as_completed**：慢院不阻塞快院入库，渐进提交。
+- **--phase2-only + 快速模式**：跳过慢的阶段一重建与 Playwright/LLM 慢策略。
