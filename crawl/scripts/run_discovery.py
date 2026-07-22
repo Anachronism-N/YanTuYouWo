@@ -208,42 +208,44 @@ async def run_phase2():
         success_count = 0
         fail_count = 0
         processed = 0
-        BATCH = 30  # 分批：每批并发定位后立即入库提交，支持中断续跑
 
-        async def _store_batch(batch_results):
+        async def _store_one(result):
             nonlocal success_count, fail_count, processed
-            for dept_id, dept_name, candidates in batch_results:
-                processed += 1
-                if candidates:
-                    for j, candidate in enumerate(candidates[:5]):
-                        dup = (await session.execute(
-                            select(DepartmentSource).where(
-                                DepartmentSource.department_id == dept_id,
-                                DepartmentSource.source_url == candidate["url"],
-                            )
-                        )).scalar_one_or_none()
-                        if dup:
-                            continue
-                        session.add(DepartmentSource(
-                            department_id=dept_id,
-                            source_url=candidate["url"],
-                            source_type=candidate.get("type", "学院通知"),
-                            priority=j + 1,
-                            parser_type="auto",
-                        ))
-                    success_count += 1
-                    logger.info(f"✅ 定位成功: {dept_name} → {len(candidates)} 源")
-                else:
-                    fail_count += 1
-                    logger.warning(f"❌ 定位失败: {dept_name}")
-            await session.commit()
+            dept_id, dept_name, candidates = result
+            processed += 1
+            if candidates:
+                for j, candidate in enumerate(candidates[:5]):
+                    dup = (await session.execute(
+                        select(DepartmentSource).where(
+                            DepartmentSource.department_id == dept_id,
+                            DepartmentSource.source_url == candidate["url"],
+                        )
+                    )).scalar_one_or_none()
+                    if dup:
+                        continue
+                    session.add(DepartmentSource(
+                        department_id=dept_id,
+                        source_url=candidate["url"],
+                        source_type=candidate.get("type", "学院通知"),
+                        priority=j + 1,
+                        parser_type="auto",
+                    ))
+                success_count += 1
+                logger.info(f"✅ 定位成功 ({processed}/{len(todo)}): {dept_name} → {len(candidates)} 源")
+            else:
+                fail_count += 1
+                logger.warning(f"❌ 定位失败 ({processed}/{len(todo)}): {dept_name}")
+            # 每 5 个提交一次（as_completed 让慢院不阻塞快院入库）
+            if processed % 5 == 0:
+                await session.commit()
 
-        # 分批并发：每 BATCH 个并发定位 → 立即入库 → 下一批
-        for start in range(0, len(todo), BATCH):
-            batch = todo[start:start + BATCH]
-            logger.info(f"--- 批次 {start // BATCH + 1}/{(len(todo) + BATCH - 1) // BATCH}: {len(batch)} 个学院 ---")
-            batch_results = await _aio.gather(*[_locate(it) for it in batch])
-            await _store_batch(batch_results)
+        # as_completed：每个院系定位完立即入库，慢院（路径猜测多）不阻塞快院
+        tasks = [_aio.ensure_future(_locate(it)) for it in todo]
+        for coro in _aio.as_completed(tasks):
+            result = await coro
+            await _store_one(result)
+
+        await session.commit()
 
         await session.commit()
 
