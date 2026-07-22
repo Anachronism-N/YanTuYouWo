@@ -90,7 +90,13 @@ async def _prepare_notice(
             return None
 
         # 2.6 导航菜单检测（有图片时跳过此检查）
-        if not has_images and content:
+        # 名单类通知（拟录取/入营/优营/复试名单等）正文本就是人名短行列表，
+        # 不应被「导航菜单/无标点」检测误杀，故跳过。
+        is_list_notice = bool(re.search(
+            r"名单|拟录取|入营|优营|候补|复试名单|录取名单|公示",
+            title,
+        ))
+        if not has_images and content and not is_list_notice:
             lines = [l.strip() for l in content.split("\n") if l.strip()]
             if len(lines) >= 5:
                 short_count = sum(1 for l in lines[:15] if len(l) <= 10 and not re.search(r"\d{4}", l))
