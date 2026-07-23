@@ -23,8 +23,10 @@ DB_PATH = "data/large_scale_test.db"
 DEPTS = [
     ("北京航空航天大学", "北京", "计算机学院", "工学", "https://scse.buaa.edu.cn/"),
     ("北京理工大学", "北京", "计算机学院", "工学", "https://cs.bit.edu.cn/"),
+    ("华中科技大学", "湖北", "计算机科学与技术学院", "工学", "http://cs.hust.edu.cn/"),
+    ("北京大学", "北京", "信息科学技术学院", "工学", "https://eecs.pku.edu.cn/"),
 ]
-MAX_PROFILES_PER_DEPT = 5  # 每院 LLM 画像上限（控成本/时间）
+MAX_PROFILES_PER_DEPT = 4  # 每院 LLM 画像上限（控成本/时间）
 
 
 async def main():
