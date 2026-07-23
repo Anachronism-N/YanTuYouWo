@@ -169,6 +169,14 @@ class HttpClient:
             except httpx.HTTPError as e:
                 error_str = str(e)
                 logger.warning(f"HTTP 错误 (尝试 {attempt + 1}/{max_retries + 1}): {url} - {e}")
+                # 服务器主动拒绝连接（TLS EOF / 连接被重置 / 拒绝）——非瞬时错误，
+                # retry/SSL-skip/http-降级都无效。快速失败，省掉无效重试时间
+                # （这些站多为 IP 封锁/地域限制，全量爬取时大量此类站点会拖垮耗时）。
+                if re.search(r"connection has been closed|EOF|RemoteDisconnected|ConnectionReset|Connection refused|winrd 10054|errno 10054", error_str, re.I):
+                    logger.debug(f"服务器拒绝连接，快速失败: {url}")
+                    if return_status:
+                        return None, None
+                    return None
                 # SSL 错误自动降级到 HTTP
                 if "SSL" in error_str and url.startswith("https://"):
                     http_url = url.replace("https://", "http://", 1)
