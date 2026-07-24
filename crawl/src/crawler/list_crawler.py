@@ -221,13 +221,22 @@ async def crawl_source(
 
 async def should_crawl(source_id: int, session: AsyncSession) -> bool:
     """
-    判断信息源是否需要爬取（基于增量爬取状态）。
+    判断信息源是否需要爬取（增量爬取 + 源健康度综合判定）。
 
-    规则：
-    - 从未爬取过 → 需要爬取
-    - 连续无更新 >= 5 次 → 降低频率（每3次才爬1次）
-    - 连续无更新 >= 10 次 → 降低频率（每5次才爬1次）
-    - 其他情况 → 需要爬取
+    增量规则（避免重复爬取已爬过的、无变化的、持续失败的源）：
+    - 失败健康度（DepartmentSource.fail_count）：
+      · >= 10 → 已被 _process_source 停用（is_active=0），不会进入本函数
+      · >= 5  → 持续失败，每 10 次才试 1 次（给恢复机会但不浪费）
+      · >= 3  → 频繁失败，每 5 次才试 1 次
+    - 更新鲜度（CrawlState.consecutive_no_update）：
+      · 无状态（从未成功）+ fail_count 0 → 爬取（新源）
+      · 无状态 + fail_count>0 → 按失败健康度降频
+      · 连续无更新 >= 10 → 每 5 次爬 1 次
+      · 连续无更新 >= 5  → 每 3 次爬 1 次
+      · 否则 → 爬取（有更新或刚爬过不久）
+
+    这样：每次增量更新只爬「新源 / 有更新的源 / 偶尔回探的源」，
+    不重复爬取已确认无变化或持续失败的源。
 
     Args:
         source_id: 信息源 ID
@@ -236,25 +245,32 @@ async def should_crawl(source_id: int, session: AsyncSession) -> bool:
     Returns:
         是否需要爬取
     """
+    total_crawls = await _count_crawls(source_id, session)
+
+    # 源健康度：查 fail_count（持续失败的源降频，省掉 SSL/反爬坏源的重试时间）
+    from src.models.university import DepartmentSource
+    fail_count = (await session.execute(
+        select(DepartmentSource.fail_count).where(DepartmentSource.id == source_id)
+    )).scalar() or 0
+    if fail_count >= 5:
+        return total_crawls % 10 == 0  # 持续失败：每 10 次回探 1 次
+    if fail_count >= 3:
+        return total_crawls % 5 == 0   # 频繁失败：每 5 次回探 1 次
+
+    # 更新鲜度
     result = await session.execute(
         select(CrawlState).where(CrawlState.source_id == source_id)
     )
     state = result.scalar_one_or_none()
 
     if not state:
-        return True  # 从未爬取过
+        return True  # 从未爬取过（且 fail_count < 3，是新源）
 
     no_update = state.consecutive_no_update
-
     if no_update >= 10:
-        # 连续10次无更新，每5次爬1次
-        total_crawls = await _count_crawls(source_id, session)
-        return total_crawls % 5 == 0
-    elif no_update >= 5:
-        # 连续5次无更新，每3次爬1次
-        total_crawls = await _count_crawls(source_id, session)
-        return total_crawls % 3 == 0
-
+        return total_crawls % 5 == 0  # 长期无更新：每 5 次爬 1 次
+    if no_update >= 5:
+        return total_crawls % 3 == 0  # 连续无更新：每 3 次爬 1 次
     return True
 
 
