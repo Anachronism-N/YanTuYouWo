@@ -148,6 +148,26 @@ def _find_main_content(soup: BeautifulSoup) -> Tag:
             else:
                 logger.debug(f"选择器 {selector} 匹配到内容过短({len(text)}字)，继续尝试")
 
+    # 启发式兜底：所有选择器未命中时，找中文内容最多的块级元素（div/td/article），
+    # 避免导航表格混杂的页面（如拟录取名单：22 个 table 里正文被导航淹没）。
+    best_el = None
+    best_cn = 0
+    for el in soup.find_all(["div", "td", "article"]):
+        # 跳过明显导航/页眉/页脚
+        cls = " ".join(el.get("class") or []).lower()
+        eid = (el.get("id") or "").lower()
+        if any(k in cls + eid for k in ("nav", "menu", "header", "footer", "sidebar", "breadcrumb")):
+            continue
+        txt = el.get_text(strip=True)
+        cn = len(re.findall(r"[一-龥]", txt))
+        # 排除整 body 级超大块（取 200-5000 字的紧凑正文块）
+        if 200 <= len(txt) <= 8000 and cn > best_cn:
+            best_cn = cn
+            best_el = el
+    if best_el and best_cn >= 50:
+        logger.debug(f"最大文本块兜底: 中文 {best_cn} 字")
+        return best_el
+
     return soup.find("body") or soup
 
 
