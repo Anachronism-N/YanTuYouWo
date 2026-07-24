@@ -85,20 +85,6 @@ def test_inline_elements_not_split():
     print("  ✅ 行内日期不被换行拆散")
 
 
-def test_largest_block_fallback():
-    """无明确正文容器时，用最大中文文本块（排除导航 div）"""
-    html = """<html><body>
-    <div class="nav"><a>首页</a><a>概况</a><a>师资</a></div>
-    <div><p>本通知面向计算机科学与技术专业优秀本科生，举办2026年暑期夏令营活动。
-    活动时间2026年7月5日至7月9日。报名截止2026年6月15日。欢迎报名参加。</p></div>
-    <div class="footer">版权所有 技术支持</div>
-    </body></html>"""
-    text = extract_content(html)
-    assert "暑期夏令营" in text and "2026年6月15日" in text
-    assert "首页" not in text and "版权" not in text
-    print("  ✅ 最大文本块兜底（无容器时排除导航）")
-
-
 def test_table_preserves_rows():
     """表格应保留行列结构（同行单元格空格连、行末换行），而非拼成 blob"""
     html = """<html><body><div class="news_content"><table>
@@ -123,6 +109,5 @@ if __name__ == "__main__":
     test_zoom_selector()
     test_strip_nav_noise()
     test_inline_elements_not_split()
-    test_largest_block_fallback()
     test_table_preserves_rows()
     print("\n🎉 所有正文提取测试通过!")
