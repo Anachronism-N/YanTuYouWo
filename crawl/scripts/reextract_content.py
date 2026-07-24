@@ -35,28 +35,36 @@ async def main():
     rows = c.execute("SELECT id, source_url, title FROM admission_notices").fetchall()
     print(f"重新提取 {len(rows)} 条通知正文")
     updated = 0
+    errors = 0
     for nid, url, title in rows:
-        html = await http_client.fetch(url, retry=1)
-        if not html:
-            continue
-        content, images = extract_content_with_images(html, url)
-        if not content or len(content) < 30:
-            continue
-        # 重补日期
-        reg_s, reg_e = infer_registration_window(content, title)
-        camp_s, camp_e = infer_camp_window(content, title)
-        c.execute(
-            "UPDATE admission_notices SET raw_content=?, images=? WHERE id=?",
-            (content[:10000], json.dumps(images[:20], ensure_ascii=False) if images else None, nid),
-        )
-        if reg_e:
-            c.execute("UPDATE admission_notices SET registration_end=? WHERE id=? AND registration_end IS NULL", (reg_e.isoformat(), nid))
-        if camp_s:
-            c.execute("UPDATE admission_notices SET camp_start=? WHERE id=? AND camp_start IS NULL", (camp_s.isoformat(), nid))
-        updated += 1
+        try:
+            html = await http_client.fetch(url, retry=1)
+            if not html:
+                continue
+            content, images = extract_content_with_images(html, url)
+            if not content or len(content) < 30:
+                continue
+            # 重补日期
+            reg_s, reg_e = infer_registration_window(content, title)
+            camp_s, camp_e = infer_camp_window(content, title)
+            c.execute(
+                "UPDATE admission_notices SET raw_content=?, images=? WHERE id=?",
+                (content[:10000], json.dumps(images[:20], ensure_ascii=False) if images else None, nid),
+            )
+            if reg_e:
+                c.execute("UPDATE admission_notices SET registration_end=? WHERE id=? AND registration_end IS NULL", (reg_e.isoformat(), nid))
+            if camp_s:
+                c.execute("UPDATE admission_notices SET camp_start=? WHERE id=? AND camp_start IS NULL", (camp_s.isoformat(), nid))
+            updated += 1
+            # 每处理 10 条提交一次（避免单条异常丢失全部进度）
+            if updated % 10 == 0:
+                db.commit()
+        except Exception as e:
+            errors += 1
+            logger.warning(f"重提取异常 id={nid} {url}: {e}")
     db.commit()
     db.close()
-    print(f"更新 {updated}/{len(rows)} 条")
+    print(f"更新 {updated}/{len(rows)} 条（异常 {errors}）")
     await http_client.close()
 
 
