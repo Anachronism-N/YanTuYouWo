@@ -411,7 +411,9 @@ export default function NoticeDetailPage() {
                   prose-ol:my-2 prose-ul:my-2
                   prose-li:my-1">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {notice.raw_content}
+                    {/* 单换行(\n)转 markdown 硬换行("  \n")，否则 ReactMarkdown
+                        会把表格/名单的逐行内容折叠成一坨（如东南汇总各院系行） */}
+                    {notice.raw_content.replace(/(?<!\n)\n(?!\n)/g, "  \n")}
                   </ReactMarkdown>
                 </div>
               </CardContent>
